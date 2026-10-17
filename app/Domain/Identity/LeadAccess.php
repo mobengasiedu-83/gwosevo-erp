@@ -1,0 +1,48 @@
+<?php
+
+namespace App\Domain\Identity;
+
+use App\Models\Lead;
+use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\DB;
+
+class LeadAccess
+{
+    public function query(User $user, ?int $organizationId = null): Builder
+    {
+        $query = Lead::query();
+        $organizationId ??= $user->active_organization_id;
+        $query->where('organization_id', $organizationId);
+        if (! $user->isActive() || ! $organizationId) {
+            return $query->whereRaw('1 = 0');
+        }
+        if ($user->hasRole('Administrator')) {
+            return $query;
+        }
+        $membership = $user->organizations()->whereKey($organizationId)->first()?->pivot;
+        if (! $membership) {
+            return $query->whereRaw('1 = 0');
+        }
+        if ($membership->scope === 'organization') {
+            return $query;
+        }
+        if ($membership->scope === 'own') {
+            return $query->where(fn ($q) => $q->where('owner_id', $user->id)->orWhere(fn ($q) => $q->whereNull('owner_id')->where('created_by', $user->id)));
+        }
+        $column = match ($membership->scope) {
+            'team' => 'team_id', 'department' => 'department_id', default => null
+        };
+        if (! $column || ! $membership->$column) {
+            return $query->whereRaw('1 = 0');
+        }
+        $members = DB::table('user_organization_memberships')->select('user_id')->where('organization_id', $organizationId)->where($column, $membership->$column);
+
+        return $query->where(fn ($q) => $q->whereIn('owner_id', clone $members)->orWhere(fn ($q) => $q->whereNull('owner_id')->whereIn('created_by', clone $members)));
+    }
+
+    public function allows(User $user, Lead $lead): bool
+    {
+        return $this->query($user, $lead->organization_id)->whereKey($lead->id)->exists();
+    }
+}
