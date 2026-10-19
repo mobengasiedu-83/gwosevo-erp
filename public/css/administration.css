@@ -48,3 +48,12 @@
 @keyframes nav-reveal{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:translateY(0)}}
 @media(min-width:821px){.sidebar-collapsed .sidebar-link>.ui-icon{width:36px;height:36px;padding:8px}.sidebar-collapsed .sidebar-link{padding:7px}}
 @media(prefers-reduced-motion:reduce){:is(.admin-tabs,.tabs)>a,:is(.admin-tabs,.tabs)>a>.ui-icon,.workspace-sidebar .sidebar-link>.ui-icon,[data-command-item]>.ui-icon:first-child{transition:none;transform:none!important}.nav-group[open]>.nav-group-links{animation:none}}
+
+/* Consistent compact actions in commercial and operations screens. */
+.workspace-action{display:inline-flex!important;align-items:center;justify-content:center;min-height:40px;padding:9px 14px;border:1px solid #d9d5dd;border-radius:8px;background:#fff;color:#51475b;font:600 12px/1.25 Inter,system-ui,sans-serif;text-decoration:none;white-space:nowrap;box-shadow:0 1px 2px #231f2008;transition:background .18s,border-color .18s,color .18s,box-shadow .18s,transform .18s}
+.workspace-action:hover{background:#f7faf5;border-color:#a9c9a1;color:#315f2a;box-shadow:0 3px 8px #231f2010;transform:translateY(-1px)}
+.workspace-action:focus-visible{outline:3px solid #449e3766;outline-offset:2px}
+.workspace-action--primary{background:#449e37;border-color:#449e37;color:#fff}
+.workspace-action--primary:hover{background:#367f2d;border-color:#367f2d;color:#fff}
+.workspace-action--compact{min-height:34px;padding:7px 11px;font-size:11px}
+@media(max-width:600px){.workspace-action{min-height:38px;padding:8px 11px}.workspace-action--compact{min-height:34px;padding:7px 10px}}
