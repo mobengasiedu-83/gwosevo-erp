@@ -16,19 +16,23 @@ class IdentitySeeder extends Seeder
             Permission::findOrCreate($permission, 'web');
         }
         app(PermissionRegistrar::class)->forgetCachedPermissions();
-        Role::findOrCreate('Administrator', 'web')->givePermissionTo($permissions);
-        Role::findOrCreate('Sales', 'web')->givePermissionTo(['opportunities.view', 'opportunities.create', 'opportunities.update', 'opportunities.assign', 'opportunities.reports.view']);
-        Role::findOrCreate('Finance', 'web')->givePermissionTo(['opportunities.view', 'opportunities.approve', 'opportunities.reports.view']);
-        Role::findOrCreate('Read Only', 'web')->givePermissionTo(['opportunities.view']);
-        Role::findOrCreate('Sales', 'web')->givePermissionTo(['quotes.view', 'quotes.create', 'quotes.update', 'contracts.view', 'contracts.create', 'contracts.update', 'contracts.onboarding.manage', 'contracts.handover', 'contracts.portal.manage']);
-        Role::findOrCreate('Finance', 'web')->givePermissionTo(['quotes.view', 'quotes.approve', 'contracts.view']);
-        Role::findOrCreate('Support', 'web')->givePermissionTo(['calls.view', 'calls.disposition']);
-        Role::findOrCreate('Operations', 'web')->givePermissionTo(['calls.view', 'calls.disposition', 'calls.supervise']);
-        Role::findOrCreate('Operations', 'web')->givePermissionTo(['contracts.view', 'contracts.onboarding.manage', 'contracts.handover']);
+        foreach ([
+            'Administrator' => $permissions,
+            'Sales' => ['leads.view', 'opportunities.view', 'opportunities.create', 'opportunities.update', 'opportunities.assign', 'opportunities.reports.view', 'quotes.view', 'quotes.create', 'quotes.update', 'contracts.view', 'contracts.create', 'contracts.update', 'contracts.onboarding.manage', 'contracts.handover', 'contracts.portal.manage'],
+            'Finance' => ['leads.view', 'opportunities.view', 'opportunities.approve', 'opportunities.reports.view', 'quotes.view', 'quotes.approve', 'contracts.view'],
+            'Read Only' => ['leads.view', 'opportunities.view'],
+            'Support' => ['calls.view', 'calls.disposition'],
+            'Operations' => ['leads.view', 'calls.view', 'calls.disposition', 'calls.supervise', 'contracts.view', 'contracts.onboarding.manage', 'contracts.handover'],
+        ] as $name => $grants) {
+            $role = Role::findOrCreate($name, 'web');
+            if ($role->wasRecentlyCreated) {
+                $role->givePermissionTo($grants);
+            }
+        }
         foreach (['Sales', 'Operations', 'Human Resources', 'Finance', 'Support', 'Read Only'] as $name) {
             $role = Role::findOrCreate($name, 'web');
             // Never overwrite roles configured by an administrator on reseed.
-            if ($role->wasRecentlyCreated) {
+            if ($role->wasRecentlyCreated && ! $role->hasPermissionTo('leads.view')) {
                 $role->givePermissionTo('leads.view');
             }
         }

@@ -47,7 +47,9 @@ class LeadService
                 $oldFollowUp = $lead->next_follow_up_at?->format('Y-m-d H:i:s');
                 $followUpChanged = $newFollowUp !== $oldFollowUp;
             }
-            $lead->update([...$data, ...($followUpChanged ? ['follow_up_reminder_sent_at' => null, 'follow_up_escalated_at' => null] : []), 'phone_normalized' => preg_replace('/\D+/', '', (string) ($data['phone'] ?? $lead->phone)) ?: null, 'custom_values' => app(CustomFields::class)->validate($data['custom_values'] ?? []), 'updated_by' => $actor?->id]);
+            $validatedCustomValues = app(CustomFields::class)->validate($data['custom_values'] ?? []);
+            $customValues = array_replace($lead->custom_values ?? [], $validatedCustomValues);
+            $lead->update([...$data, ...($followUpChanged ? ['follow_up_reminder_sent_at' => null, 'follow_up_escalated_at' => null] : []), 'phone_normalized' => preg_replace('/\D+/', '', (string) ($data['phone'] ?? $lead->phone)) ?: null, 'custom_values' => $customValues, 'updated_by' => $actor?->id]);
             $this->refreshScore($lead);
             $lead->refresh();
             $candidates = app(LeadDuplicates::class)->candidates($lead, 1);

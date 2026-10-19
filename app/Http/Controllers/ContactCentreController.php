@@ -52,9 +52,12 @@ class ContactCentreController extends Controller
     public function connect(Request $request)
     {
         $this->enabled(); abort_unless($request->user()->can('calls.configure'),403);$org=$this->org($request);
-        $data=$request->validate(['name'=>['required','string','max:120'],'base_url'=>['required','url','max:255'],'api_token'=>['nullable','string','max:4000'],'is_active'=>['nullable','boolean']]);
-        if (!empty($data['base_url'])) abort_unless(parse_url($data['base_url'], PHP_URL_SCHEME)==='https',422,'PBX API profiles must use HTTPS.');
-        $id=Str::random(48);PbxConnection::create(['organization_id'=>$org,'name'=>$data['name'],'driver'=>'vitalpbx','base_url'=>$data['base_url']??null,'api_token'=>$data['api_token']??null,'webhook_secret'=>$id,'is_active'=>false,'created_by'=>$request->user()->id]);
+        $data=$request->validate(['name'=>['required','string','max:120'],'base_url'=>['nullable','url','max:255'],'api_token'=>['nullable','string','max:4000'],'is_active'=>['nullable','boolean']]);
+        $baseUrl = filled($data['base_url'] ?? null) ? $data['base_url'] : config('vitalpbx.base_url');
+        $apiToken = filled($data['api_token'] ?? null) ? $data['api_token'] : config('vitalpbx.api_key');
+        abort_if(blank($baseUrl),422,'Set VITALPBX_API_BASE_URL in .env or enter the approved HTTPS API base URL.');
+        abort_unless(parse_url($baseUrl, PHP_URL_SCHEME)==='https',422,'PBX API profiles must use HTTPS.');
+        $id=Str::random(48);PbxConnection::create(['organization_id'=>$org,'name'=>$data['name'],'driver'=>'vitalpbx','base_url'=>$baseUrl,'api_token'=>$apiToken,'webhook_secret'=>$id,'is_active'=>false,'created_by'=>$request->user()->id]);
         return back()->with('success','Connection profile saved disabled. The webhook signing secret is shown once: '.$id.' Configure an approved VitalPBX/Asterisk interface before activation.');
     }
 

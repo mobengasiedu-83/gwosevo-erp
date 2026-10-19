@@ -11,11 +11,57 @@ use App\Models\SystemSetting;
 use App\Models\User;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Schedule;
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
+
+Artisan::command('vitalpbx:check', function () {
+    $baseUrl = rtrim((string) config('vitalpbx.base_url'), '/');
+    $apiKey = (string) config('vitalpbx.api_key');
+
+    if ($baseUrl === '' || $apiKey === '') {
+        $this->error('Set VITALPBX_API_BASE_URL and VITALPBX_API_KEY in .env first.');
+
+        return self::FAILURE;
+    }
+
+    if (parse_url($baseUrl, PHP_URL_SCHEME) !== 'https') {
+        $this->error('VitalPBX API base URL must use HTTPS.');
+
+        return self::FAILURE;
+    }
+
+    try {
+        $request = Http::acceptJson()
+            ->withHeader('app-key', $apiKey)
+            ->connectTimeout(min(5, (int) config('vitalpbx.timeout')))
+            ->timeout((int) config('vitalpbx.timeout'));
+
+        if (filled(config('vitalpbx.tenant'))) {
+            $request->withHeader('tenant', (string) config('vitalpbx.tenant'));
+        }
+
+        $response = $request->get($baseUrl.'/api/v2/tenants');
+    } catch (\Throwable $exception) {
+        report($exception);
+        $this->error('VitalPBX API request failed. Check the URL, TLS certificate, firewall, and Laravel log.');
+
+        return self::FAILURE;
+    }
+
+    if (! $response->successful()) {
+        $this->error('VitalPBX API returned HTTP '.$response->status().'. Check the API key, tenant, and API access rules.');
+
+        return self::FAILURE;
+    }
+
+    $this->info('VitalPBX API responded successfully over HTTPS.');
+
+    return self::SUCCESS;
+})->purpose('Check the configured VitalPBX API credentials and HTTPS access');
 
 Schedule::call(function () {
     SystemSetting::updateOrCreate(['key' => 'scheduler_last_seen'], ['value' => now()->toIso8601String()]);
