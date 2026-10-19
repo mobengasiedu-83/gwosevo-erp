@@ -1,5 +1,6 @@
 <?php
 
+use App\Domain\ContactCentre\VitalPbxCallHistory;
 use App\Domain\Identity\AccessReviews;
 use App\Jobs\HealthHeartbeat;
 use App\Console\Commands\SendLeadFollowUpAlerts;
@@ -7,6 +8,7 @@ use App\Console\Commands\CaptureOpportunityForecast;
 use App\Console\Commands\SendOpportunityActionAlerts;
 use App\Console\Commands\SendContractRenewalAlerts;
 use App\Models\AccessReview;
+use App\Models\PbxConnection;
 use App\Models\SystemSetting;
 use App\Models\User;
 use Illuminate\Foundation\Inspiring;
@@ -63,6 +65,29 @@ Artisan::command('vitalpbx:check', function () {
     return self::SUCCESS;
 })->purpose('Check the configured VitalPBX API credentials and HTTPS access');
 
+Artisan::command('vitalpbx:sync-calls', function (VitalPbxCallHistory $callHistory) {
+    $connections = PbxConnection::where('driver', 'vitalpbx')->orderBy('id')->get();
+    if ($connections->isEmpty()) {
+        $this->info('No VitalPBX profiles are configured.');
+
+        return self::SUCCESS;
+    }
+
+    $failed = false;
+    foreach ($connections as $connection) {
+        try {
+            $result = $callHistory->sync($connection);
+            $this->info(sprintf('%s: %d new, %d updated, %d skipped.', $connection->name, $result['imported'], $result['updated'], $result['skipped']));
+        } catch (\Throwable $exception) {
+            report($exception);
+            $this->error($connection->name.': call history sync failed. Check the API credentials, CDR permissions, and Laravel log.');
+            $failed = true;
+        }
+    }
+
+    return $failed ? self::FAILURE : self::SUCCESS;
+})->purpose('Import completed call records from configured VitalPBX profiles');
+
 Schedule::call(function () {
     SystemSetting::updateOrCreate(['key' => 'scheduler_last_seen'], ['value' => now()->toIso8601String()]);
     HealthHeartbeat::dispatch();
@@ -97,3 +122,4 @@ Schedule::command(SendLeadFollowUpAlerts::class)->everyFifteenMinutes()->without
 Schedule::command(CaptureOpportunityForecast::class)->weeklyOn(1, '07:00')->withoutOverlapping();
 Schedule::command(SendOpportunityActionAlerts::class)->everyFifteenMinutes()->withoutOverlapping();
 Schedule::command(SendContractRenewalAlerts::class)->daily()->withoutOverlapping();
+Schedule::command('vitalpbx:sync-calls')->everyFiveMinutes()->withoutOverlapping();

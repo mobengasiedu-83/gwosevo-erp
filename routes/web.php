@@ -31,6 +31,7 @@ Route::middleware('auth')->group(function () {
         Route::put('/calls/{call}/disposition', [ContactCentreController::class, 'disposition'])->whereNumber('call')->name('calls.disposition');
         Route::post('/connections', [ContactCentreController::class, 'connect'])->name('connections.store');
         Route::post('/connections/{connection}/extensions/sync', [ContactCentreController::class, 'syncExtensions'])->whereNumber('connection')->name('connections.extensions.sync');
+        Route::post('/connections/{connection}/calls/sync', [ContactCentreController::class, 'syncCallHistory'])->whereNumber('connection')->name('connections.calls.sync');
         Route::post('/connections/{connection}/activate', [ContactCentreController::class, 'activateConnection'])->whereNumber('connection')->name('connections.activate');
         Route::post('/agents', [ContactCentreController::class, 'mapAgent'])->name('agents.store');
         Route::post('/qa/forms', [ContactCentreController::class, 'formStore'])->name('qa.forms.store');

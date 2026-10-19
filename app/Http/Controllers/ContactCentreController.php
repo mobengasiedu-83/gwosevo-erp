@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Domain\ContactCentre\VitalPbxCallHistory;
+use App\Domain\ContactCentre\VitalPbxExtensions;
 use App\Models\Account;
 use App\Models\CallEvaluation;
 use App\Models\CallEvaluationForm;
@@ -10,7 +12,6 @@ use App\Models\Contact;
 use App\Models\PbxConnection;
 use App\Models\PbxExtension;
 use App\Models\User;
-use App\Domain\ContactCentre\VitalPbxExtensions;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -28,7 +29,7 @@ class ContactCentreController extends Controller
         $stats=['total'=>(clone $today)->count(),'answered'=>(clone $today)->where('status','answered')->count(),'abandoned'=>(clone $today)->where('status','abandoned')->count(),'avg_wait'=>(int)((clone $today)->avg('wait_seconds')??0)];
         $queues=CallRecord::where('organization_id',$org)->whereNotNull('queue')->distinct()->orderBy('queue')->pluck('queue');
         $agents=User::where('status','active')->whereHas('organizations',fn($q)=>$q->whereKey($org))->with(['pbxExtensions'=>fn($q)=>$q->whereHas('connection',fn($c)=>$c->where('organization_id',$org))])->orderBy('name')->get();
-        $connections=PbxConnection::where('organization_id',$org)->latest()->get();
+        $connections=PbxConnection::where('organization_id',$org)->with('extensions.user')->latest()->get();
         $forms=CallEvaluationForm::where('organization_id',$org)->where('is_active',true)->get();
         return view('contact-centre.index',compact('calls','stats','queues','agents','connections','forms'));
     }
@@ -81,6 +82,29 @@ class ContactCentreController extends Controller
         $connection->update(['settings' => $settings, 'last_connected_at' => now()]);
 
         return back()->with('success', count($extensions).' VitalPBX extensions synced.');
+    }
+
+    public function syncCallHistory(Request $request, PbxConnection $connection, VitalPbxCallHistory $callHistory)
+    {
+        $this->enabled();
+        abort_unless($request->user()->can('calls.configure'), 403);
+        abort_unless((int) $connection->organization_id === $this->org($request), 404);
+        abort_unless($connection->driver === 'vitalpbx', 422, 'Call history sync is available for VitalPBX profiles.');
+
+        $data = $request->validate(['lookback_days' => ['nullable', 'integer', 'min:1', 'max:365']]);
+
+        try {
+            $result = $callHistory->sync($connection, isset($data['lookback_days']) ? (int) $data['lookback_days'] : null);
+        } catch (\RuntimeException $exception) {
+            return back()->withErrors([$exception->getMessage()]);
+        }
+
+        return back()->with('success', sprintf(
+            'VitalPBX call history synced: %d new, %d updated, %d skipped.',
+            $result['imported'],
+            $result['updated'],
+            $result['skipped']
+        ));
     }
 
     public function mapAgent(Request $request)

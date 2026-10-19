@@ -18,12 +18,23 @@
                     @else
                         <p class="text-xs text-slate-500">Not synced yet</p>
                     @endif
+                    @if(data_get($connection->settings, 'calls_synced_at'))
+                        <p class="text-xs text-slate-500">Call history last synced {{ \Illuminate\Support\Carbon::parse(data_get($connection->settings, 'calls_synced_at'))->format('Y-m-d H:i') }}</p>
+                    @endif
                 </div>
                 @can('calls.configure')
-                    <form method="POST" action="{{ route('contact-centre.connections.extensions.sync', $connection) }}">
-                        @csrf
-                        <button class="workspace-action workspace-action--compact">Sync extensions</button>
-                    </form>
+                    <div class="flex flex-wrap gap-2">
+                        <form method="POST" action="{{ route('contact-centre.connections.extensions.sync', $connection) }}">
+                            @csrf
+                            <button class="workspace-action workspace-action--compact">Sync extensions</button>
+                        </form>
+                        <form method="POST" action="{{ route('contact-centre.connections.calls.sync', $connection) }}">
+                            @csrf
+                            <label class="sr-only" for="call-history-lookback-{{ $connection->id }}">Call history lookback in days</label>
+                            <input id="call-history-lookback-{{ $connection->id }}" name="lookback_days" type="number" min="1" max="365" value="{{ config('vitalpbx.cdr_initial_lookback_days', 7) }}" class="w-24 rounded border border-slate-300 px-2 py-1.5 text-sm" title="Days of call history to sync">
+                            <button class="workspace-action workspace-action--compact">Sync call history</button>
+                        </form>
+                    </div>
                 @endcan
             </div>
 
@@ -36,15 +47,18 @@
                                 <th class="p-2">Name</th>
                                 <th class="p-2">Technology</th>
                                 <th class="p-2">Registration status</th>
+                                <th class="p-2">Mapped ERP user</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach($directory as $extension)
+                                @php($mapping = $connection->extensions->firstWhere('extension', $extension['extension'] ?? null))
                                 <tr class="border-t">
                                     <td class="p-2 font-medium">{{ $extension['extension'] ?? '—' }}</td>
                                     <td class="p-2">{{ $extension['name'] ?: '—' }}</td>
                                     <td class="p-2">{{ $extension['technology'] ?: '—' }}</td>
                                     <td class="p-2">{{ $extension['status'] ?: '—' }}</td>
+                                    <td class="p-2">{{ $mapping?->user?->name ?? 'Not mapped' }}</td>
                                 </tr>
                             @endforeach
                         </tbody>
@@ -55,7 +69,7 @@
             @endif
         </div>
     @empty
-        <p class="text-sm text-slate-500">Create a VitalPBX profile to import its extension directory.</p>
+        <p class="text-sm text-slate-500">Create a PBX profile, then select <strong>Sync extensions</strong> to import the directory.</p>
     @endforelse
 </section>
 @endcan
