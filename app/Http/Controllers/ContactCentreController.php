@@ -10,6 +10,7 @@ use App\Models\Contact;
 use App\Models\PbxConnection;
 use App\Models\PbxExtension;
 use App\Models\User;
+use App\Domain\ContactCentre\VitalPbxExtensions;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -59,6 +60,27 @@ class ContactCentreController extends Controller
         abort_unless(parse_url($baseUrl, PHP_URL_SCHEME)==='https',422,'PBX API profiles must use HTTPS.');
         $id=Str::random(48);PbxConnection::create(['organization_id'=>$org,'name'=>$data['name'],'driver'=>'vitalpbx','base_url'=>$baseUrl,'api_token'=>$apiToken,'webhook_secret'=>$id,'is_active'=>false,'created_by'=>$request->user()->id]);
         return back()->with('success','Connection profile saved disabled. The webhook signing secret is shown once: '.$id.' Configure an approved VitalPBX/Asterisk interface before activation.');
+    }
+
+    public function syncExtensions(Request $request, PbxConnection $connection, VitalPbxExtensions $vitalPbx)
+    {
+        $this->enabled();
+        abort_unless($request->user()->can('calls.configure'), 403);
+        abort_unless((int) $connection->organization_id === $this->org($request), 404);
+        abort_unless($connection->driver === 'vitalpbx', 422, 'Extension sync is available for VitalPBX profiles.');
+
+        try {
+            $extensions = $vitalPbx->fetch($connection);
+        } catch (\RuntimeException $exception) {
+            return back()->withErrors([$exception->getMessage()]);
+        }
+
+        $settings = $connection->settings ?? [];
+        $settings['extensions_directory'] = $extensions;
+        $settings['extensions_synced_at'] = now()->toIso8601String();
+        $connection->update(['settings' => $settings, 'last_connected_at' => now()]);
+
+        return back()->with('success', count($extensions).' VitalPBX extensions synced.');
     }
 
     public function mapAgent(Request $request)
