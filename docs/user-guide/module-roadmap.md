@@ -1,8 +1,8 @@
 # GWO SEVO ERP — Complete Module Catalogue and Roadmap
 
-**Edition:** 17 October 2026. [Return to the user guide](README.md).
+**Edition:** 19 October 2026. [Return to the user guide](README.md).
 
-The feature tables below reproduce the supplied Module Feature Breakdown as a requirements reference. They do not claim every feature is operational. Modules 01–03 are installed within the boundaries explained in the user guide. Module 04 has a lead foundation. Modules 05–22 are planned. No future-module procedures are fabricated.
+The feature tables below reproduce the supplied Module Feature Breakdown as a requirements reference. Modules 01–07 are installed within the boundaries explained in the user guide. Modules 08–22 are planned. No future-module procedures are fabricated.
 
 ## Module 01 System Administration & Configuration
 
@@ -66,7 +66,7 @@ The feature tables below reproduce the supplied Module Feature Breakdown as a re
 
 ## Module 04 CRM & Lead Management
 
-**Status:** Partial: current lead foundation only. Manual capture/edit/search, owner assignment, manual qualification, activities and conversion are available. Other listed capabilities await implementation.
+**Status:** Installed. Manual, signed website and authenticated API capture, approved CSV import, profile/qualification/scoring, duplicate review, assignment rules and round-robin routing, activities/follow-ups, conversion, disqualification, archive/restore and scoped reports are available. Integration secrets, scheduler operation and role grants require operator configuration.
 
 **Purpose:** Manage prospects from enquiry through qualification.
 
@@ -88,7 +88,7 @@ The feature tables below reproduce the supplied Module Feature Breakdown as a re
 
 ## Module 05 Sales Pipeline & Opportunities
 
-**Status:** Planned — not installed. No operational screens or end-to-end user procedures are available yet.
+**Status:** Installed. Opportunity capture, stage pipeline, assignment, service mapping, activities/reminders, competitor tracking, commercial approvals, targets, weighted forecasts, win rate, sales velocity, forecast accuracy snapshots and scoped reports are available. Approved service catalog names, quota values, access grants and continuous scheduler operation require setup.
 
 **Purpose:** Manage deals, forecasting and commercial performance.
 
@@ -107,11 +107,13 @@ The feature tables below reproduce the supplied Module Feature Breakdown as a re
 | Targets | Sales quotas by person and team |
 | Analytics | Win rate, velocity and forecast accuracy |
 
-**Before operational use:** install the module, configure its master data and permissions, accept its business workflows and integrations, then update this guide with verified screen-by-screen instructions.
+See [Module 05 setup and user guide](../module-five.md). The specifications require four strategic service lines and seven integrated service packages, but do not provide their names; the catalog is therefore empty until an administrator enters the approved company names.
+
+**Before operational use:** configure approved service names and targets, review permissions and stage probabilities, and accept the discount/terms workflow with Sales and Finance.
 
 ## Module 06 Quotations, Contracts & Client Onboarding
 
-**Status:** Planned — not installed. No operational screens or end-to-end user procedures are available yet.
+**Status:** Installed. See [Module 06 setup and user guide](../module-six.md).
 
 **Purpose:** Turn opportunities into contracted and onboarded clients.
 
@@ -121,8 +123,8 @@ The feature tables below reproduce the supplied Module Feature Breakdown as a re
 | --- | --- |
 | Service Catalogue | Products, services and integrated packages |
 | Pricing | Fixed, recurring, usage-based and negotiated pricing |
-| Quotations | Draft, version, approve and PDF export |
-| Discount Controls | Approval limits and justification |
+| Quotations | Draft, version, approve and print-to-PDF export |
+| Discount Controls | Independent approval with justification; configure thresholds with business owners |
 | Contracts | Templates, documents and renewal dates |
 | Service Agreements | SLA terms and deliverables |
 | Onboarding | Documents, checklists and approvals |
@@ -130,11 +132,11 @@ The feature tables below reproduce the supplied Module Feature Breakdown as a re
 | Renewals | Expiry alerts and renewal opportunities |
 | Client Portal | Permitted contract and onboarding views |
 
-**Before operational use:** install the module, configure its master data and permissions, accept its business workflows and integrations, then update this guide with verified screen-by-screen instructions.
+**Before operational use:** configure approved templates, pricing and role permissions, run the scheduler, and accept the quote, agreement, onboarding, handover and client portal workflows with business owners.
 
 ## Module 07 Contact Centre & VitalPBX
 
-**Status:** Planned — not installed. No operational screens or end-to-end user procedures are available yet.
+**Status:** Installed with the boundaries in the [Module 07 operations guide](../module-seven.md). PBX provider activation requires approved API/interface details.
 
 **Purpose:** Link telephony operations to customer records.
 
@@ -154,7 +156,7 @@ The feature tables below reproduce the supplied Module Feature Breakdown as a re
 | Quality Assurance | Evaluation forms and scoring |
 | Supervisor Dashboard | Agent and queue performance |
 
-**Before operational use:** install the module, configure its master data and permissions, accept its business workflows and integrations, then update this guide with verified screen-by-screen instructions.
+**Before operational use:** approve the provider interface, event mapping, lawful recording policy and role assignments; configure the encrypted connection profile and signing secret; then verify events against the provider.
 
 ## Module 08 Customer Support & Ticketing
 
@@ -178,7 +180,7 @@ The feature tables below reproduce the supplied Module Feature Breakdown as a re
 | Satisfaction | Post-resolution feedback |
 | Analytics | SLA compliance, reopen rate and resolution time |
 
-**Before operational use:** install the module, configure its master data and permissions, accept its business workflows and integrations, then update this guide with verified screen-by-screen instructions.
+**Before operational use:** approve the provider interface, event mapping, lawful recording policy and role assignments; configure the encrypted connection profile and signing secret; then verify events against the provider.
 
 ## Module 09 SMS & Communication Management
 
@@ -202,7 +204,7 @@ The feature tables below reproduce the supplied Module Feature Breakdown as a re
 | Usage Reports | Submission, failures and costs |
 | History | Associate messages with ERP records |
 
-**Before operational use:** install the module, configure its master data and permissions, accept its business workflows and integrations, then update this guide with verified screen-by-screen instructions.
+**Before operational use:** approve the provider interface, event mapping, lawful recording policy and role assignments; configure the encrypted connection profile and signing secret; then verify events against the provider.
 
 ## Module 10 Marketing, Campaigns & Lead Generation
 
@@ -225,7 +227,7 @@ The feature tables below reproduce the supplied Module Feature Breakdown as a re
 | Conversions | Leads, opportunities and won revenue |
 | Affiliates | Referral attribution and approved commissions |
 
-**Before operational use:** install the module, configure its master data and permissions, accept its business workflows and integrations, then update this guide with verified screen-by-screen instructions.
+**Before operational use:** approve the provider interface, event mapping, lawful recording policy and role assignments; configure the encrypted connection profile and signing secret; then verify events against the provider.
 
 ## Module 11 Human Resources & Employee Records
 
@@ -249,7 +251,7 @@ The feature tables below reproduce the supplied Module Feature Breakdown as a re
 | Training | Courses and certifications |
 | Reports | Headcount, tenure and turnover |
 
-**Before operational use:** install the module, configure its master data and permissions, accept its business workflows and integrations, then update this guide with verified screen-by-screen instructions.
+**Before operational use:** approve the provider interface, event mapping, lawful recording policy and role assignments; configure the encrypted connection profile and signing secret; then verify events against the provider.
 
 ## Module 12 Recruitment & Assessments
 
@@ -274,7 +276,7 @@ The feature tables below reproduce the supplied Module Feature Breakdown as a re
 | Hiring Conversion | Successful applicant to employee |
 | Reports | Time-to-hire and funnel performance |
 
-**Before operational use:** install the module, configure its master data and permissions, accept its business workflows and integrations, then update this guide with verified screen-by-screen instructions.
+**Before operational use:** approve the provider interface, event mapping, lawful recording policy and role assignments; configure the encrypted connection profile and signing secret; then verify events against the provider.
 
 ## Module 13 Performance Management & Appraisals
 
@@ -301,7 +303,7 @@ The feature tables below reproduce the supplied Module Feature Breakdown as a re
 | Development Plans | Training and growth actions |
 | History & Analytics | Trends, completion and attainment |
 
-**Before operational use:** install the module, configure its master data and permissions, accept its business workflows and integrations, then update this guide with verified screen-by-screen instructions.
+**Before operational use:** approve the provider interface, event mapping, lawful recording policy and role assignments; configure the encrypted connection profile and signing secret; then verify events against the provider.
 
 ## Module 14 Attendance, Leave & Employee Self-Service
 
@@ -324,7 +326,7 @@ The feature tables below reproduce the supplied Module Feature Breakdown as a re
 | Manager Portal | Team attendance and approvals |
 | Reports | Absence, lateness and leave utilization |
 
-**Before operational use:** install the module, configure its master data and permissions, accept its business workflows and integrations, then update this guide with verified screen-by-screen instructions.
+**Before operational use:** approve the provider interface, event mapping, lawful recording policy and role assignments; configure the encrypted connection profile and signing secret; then verify events against the provider.
 
 ## Module 15 Projects, Tasks & Team Productivity
 
@@ -349,7 +351,7 @@ The feature tables below reproduce the supplied Module Feature Breakdown as a re
 | Risks | Risk and issue registers |
 | Reports | Overdue, workload and completion |
 
-**Before operational use:** install the module, configure its master data and permissions, accept its business workflows and integrations, then update this guide with verified screen-by-screen instructions.
+**Before operational use:** approve the provider interface, event mapping, lawful recording policy and role assignments; configure the encrypted connection profile and signing secret; then verify events against the provider.
 
 ## Module 16 Finance, Invoicing & Revenue Management
 
@@ -374,7 +376,7 @@ The feature tables below reproduce the supplied Module Feature Breakdown as a re
 | Exports | Accounting and spreadsheet output |
 | Dashboard | Collections, receivables and budget use |
 
-**Before operational use:** install the module, configure its master data and permissions, accept its business workflows and integrations, then update this guide with verified screen-by-screen instructions.
+**Before operational use:** approve the provider interface, event mapping, lawful recording policy and role assignments; configure the encrypted connection profile and signing secret; then verify events against the provider.
 
 ## Module 17 Procurement, Assets & Inventory
 
@@ -398,7 +400,7 @@ The feature tables below reproduce the supplied Module Feature Breakdown as a re
 | Disposal | Authorization and retirement |
 | Reports | Spend, assets and stock |
 
-**Before operational use:** install the module, configure its master data and permissions, accept its business workflows and integrations, then update this guide with verified screen-by-screen instructions.
+**Before operational use:** approve the provider interface, event mapping, lawful recording policy and role assignments; configure the encrypted connection profile and signing secret; then verify events against the provider.
 
 ## Module 18 Knowledge Bank & AI Search
 
@@ -425,7 +427,7 @@ The feature tables below reproduce the supplied Module Feature Breakdown as a re
 | Feedback | Relevance and quality ratings |
 | Analytics | Search usage and unanswered queries |
 
-**Before operational use:** install the module, configure its master data and permissions, accept its business workflows and integrations, then update this guide with verified screen-by-screen instructions.
+**Before operational use:** approve the provider interface, event mapping, lawful recording policy and role assignments; configure the encrypted connection profile and signing secret; then verify events against the provider.
 
 ## Module 19 Reports, Dashboards & Business Intelligence
 
@@ -448,7 +450,7 @@ The feature tables below reproduce the supplied Module Feature Breakdown as a re
 | Exports | CSV, Excel and PDF |
 | KPI Definitions | Shared formulas and data ownership |
 
-**Before operational use:** install the module, configure its master data and permissions, accept its business workflows and integrations, then update this guide with verified screen-by-screen instructions.
+**Before operational use:** approve the provider interface, event mapping, lawful recording policy and role assignments; configure the encrypted connection profile and signing secret; then verify events against the provider.
 
 ## Module 20 Notifications, Approvals & Automation
 
@@ -473,7 +475,7 @@ The feature tables below reproduce the supplied Module Feature Breakdown as a re
 | Delivery Logs | Attempts, failure and retries |
 | Audit | Decision history and timestamps |
 
-**Before operational use:** install the module, configure its master data and permissions, accept its business workflows and integrations, then update this guide with verified screen-by-screen instructions.
+**Before operational use:** approve the provider interface, event mapping, lawful recording policy and role assignments; configure the encrypted connection profile and signing secret; then verify events against the provider.
 
 ## Module 21 Integration & API Management
 
@@ -498,7 +500,7 @@ The feature tables below reproduce the supplied Module Feature Breakdown as a re
 | Recovery | Backoff, idempotency and dead letters |
 | Health | Connectivity and service status |
 
-**Before operational use:** install the module, configure its master data and permissions, accept its business workflows and integrations, then update this guide with verified screen-by-screen instructions.
+**Before operational use:** approve the provider interface, event mapping, lawful recording policy and role assignments; configure the encrypted connection profile and signing secret; then verify events against the provider.
 
 ## Module 22 Security, Audit, Backup & Monitoring
 
@@ -523,4 +525,4 @@ The feature tables below reproduce the supplied Module Feature Breakdown as a re
 | Disaster Recovery | RPO/RTO and restoration |
 | Compliance | Privacy and access reviews |
 
-**Before operational use:** install the module, configure its master data and permissions, accept its business workflows and integrations, then update this guide with verified screen-by-screen instructions.
+**Before operational use:** approve the provider interface, event mapping, lawful recording policy and role assignments; configure the encrypted connection profile and signing secret; then verify events against the provider.

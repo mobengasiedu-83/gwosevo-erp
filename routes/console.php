@@ -2,6 +2,10 @@
 
 use App\Domain\Identity\AccessReviews;
 use App\Jobs\HealthHeartbeat;
+use App\Console\Commands\SendLeadFollowUpAlerts;
+use App\Console\Commands\CaptureOpportunityForecast;
+use App\Console\Commands\SendOpportunityActionAlerts;
+use App\Console\Commands\SendContractRenewalAlerts;
 use App\Models\AccessReview;
 use App\Models\SystemSetting;
 use App\Models\User;
@@ -42,3 +46,8 @@ Artisan::command('identity:review-due', function () {
 })->purpose('Create an access review when the configured recertification interval is due');
 
 Schedule::command('identity:review-due')->daily()->withoutOverlapping();
+
+Schedule::command(SendLeadFollowUpAlerts::class)->everyFifteenMinutes()->withoutOverlapping();
+Schedule::command(CaptureOpportunityForecast::class)->weeklyOn(1, '07:00')->withoutOverlapping();
+Schedule::command(SendOpportunityActionAlerts::class)->everyFifteenMinutes()->withoutOverlapping();
+Schedule::command(SendContractRenewalAlerts::class)->daily()->withoutOverlapping();

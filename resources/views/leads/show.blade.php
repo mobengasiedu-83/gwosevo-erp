@@ -1,81 +1,14 @@
 <x-layouts.app>
-    <div class="mb-6 flex flex-wrap justify-between gap-3">
-        <div>
-            <p class="text-sm text-slate-500">{{ $lead->reference }} · {{ ucfirst($lead->status) }}</p>
-            <h1 class="text-3xl font-bold">{{ $lead->full_name }}</h1>
-            <p class="text-slate-600">{{ $lead->company_name }} · {{ $lead->email }} · {{ $lead->phone }}</p>
-        </div>
-        @can('update', $lead)
-            <a class="rounded border px-4 py-2" href="{{ route('leads.edit', $lead) }}">Edit</a>
-        @endcan
-    </div>
-    <div class="grid gap-5 lg:grid-cols-3">
-        <section class="space-y-5 lg:col-span-2">
-            <div class="rounded bg-white p-5 shadow-sm">
-                <h2 class="mb-3 font-semibold">Lead profile</h2>
-                <dl class="grid grid-cols-2 gap-3 text-sm">
-                    <div><dt class="text-slate-500">Source</dt><dd>{{ ucfirst(str_replace('_', ' ', $lead->source)) }}</dd></div>
-                    <div><dt class="text-slate-500">Owner</dt><dd>{{ $lead->owner?->name ?: 'Unassigned' }}</dd></div>
-                    <div><dt class="text-slate-500">Industry</dt><dd>{{ $lead->industry ?: '—' }}</dd></div>
-                    <div><dt class="text-slate-500">Score</dt><dd>{{ $lead->score }}/100</dd></div>
-                    @foreach($customFields as $field)<div><dt class="text-slate-500">{{ $field->label }}</dt><dd>{{ $lead->custom_values[$field->key] ?? '—' }}</dd></div>@endforeach
-                    <div><dt class="text-slate-500">Next follow-up</dt><dd>{{ $erpSettings->formatDate($lead->next_follow_up_at,true) }}</dd></div>
-                </dl>
-            </div>
-            <div class="rounded bg-white p-5 shadow-sm">
-                <h2 class="mb-3 font-semibold">Activity timeline</h2>
-                @forelse ($lead->activities as $activity)
-                    <div class="border-b py-3"><strong>{{ ucfirst($activity->type) }}: {{ $activity->subject }}</strong><p class="text-sm text-slate-600">{{ $activity->body }}</p></div>
-                @empty
-                    <p class="text-slate-500">No activities recorded.</p>
-                @endforelse
-                @can('update', $lead)
-                    <form method="POST" action="{{ route('leads.activities.store', $lead) }}" class="mt-4 grid gap-2">
-                        @csrf
-                        <select name="type" class="rounded border-slate-300"><option value="note">Note</option><option value="call">Call</option><option value="meeting">Meeting</option><option value="task">Task</option></select>
-                        <input class="rounded border-slate-300" name="subject" placeholder="Activity subject" required>
-                        <textarea class="rounded border-slate-300" name="body" placeholder="Details"></textarea>
-                        <button class="w-fit rounded bg-slate-800 px-3 py-2 text-white">Add activity</button>
-                    </form>
-                @endcan
-            </div>
-        </section>
-        <aside class="space-y-5">
-            @can('assign', $lead)
-                <div class="rounded bg-white p-5 shadow-sm">
-                    <h2 class="mb-3 font-semibold">Assign</h2>
-                    <form method="POST" action="{{ route('leads.assign', $lead) }}">
-                        @csrf
-                        <select name="owner_id" class="w-full rounded border-slate-300">
-                            @foreach ($owners as $owner)
-                                <option value="{{ $owner->id }}" @selected($lead->owner_id === $owner->id)>{{ $owner->name }}</option>
-                            @endforeach
-                        </select>
-                        <button class="mt-2 rounded bg-slate-800 px-3 py-2 text-white">Update owner</button>
-                    </form>
-                </div>
-            @endcan
-            @if (! in_array($lead->status, ['converted', 'disqualified'], true))
-                @can('qualify', $lead)
-                    <div class="rounded bg-white p-5 shadow-sm">
-                        <h2 class="mb-3 font-semibold">Qualify lead</h2>
-                        <form method="POST" action="{{ route('leads.qualify', $lead) }}" class="space-y-2">
-                            @csrf
-                            <input class="w-full rounded border-slate-300" name="budget" type="number" step="0.01" placeholder="Budget ({{ $erpSettings->get('currency') }})">
-                            <input class="w-full rounded border-slate-300" name="authority" placeholder="Decision authority">
-                            <textarea class="w-full rounded border-slate-300" name="need" placeholder="Business need"></textarea>
-                            <input class="w-full rounded border-slate-300" name="timeline" placeholder="Timeline">
-                            <input class="w-full rounded border-slate-300" name="score" type="number" min="0" max="100" value="{{ $lead->score }}">
-                            <button class="rounded bg-indigo-600 px-3 py-2 text-white">Mark qualified</button>
-                        </form>
-                    </div>
-                @endcan
-            @endif
-            @if ($lead->status === 'qualified')
-                @can('convert', $lead)
-                    <form method="POST" action="{{ route('leads.convert', $lead) }}">@csrf<button class="w-full rounded bg-emerald-600 px-3 py-2 font-semibold text-white">Convert to opportunity</button></form>
-                @endcan
-            @endif
-        </aside>
-    </div>
+    <div class="mb-6 flex flex-wrap justify-between gap-3"><div><p class="text-sm text-slate-500">{{ $lead->reference }} · {{ ucfirst($lead->status) }} @if($lead->archived_at) · Archived @endif</p><h1 class="text-3xl font-bold">{{ $lead->full_name }}</h1><p class="text-slate-600">{{ $lead->company_name }} · {{ $lead->email }} · {{ $lead->phone }}</p></div><div class="flex gap-2">@can('update',$lead)<a class="rounded border px-4 py-2" href="{{ route('leads.edit',$lead) }}">Edit</a>@endcan @can('archive',$lead)@if($lead->archived_at)<form method="POST" action="{{ route('leads.restore',$lead) }}">@csrf<button class="rounded border px-4 py-2">Restore</button></form>@else<form method="POST" action="{{ route('leads.archive',$lead) }}">@csrf<button class="rounded border px-4 py-2">Archive</button></form>@endif @endcan</div></div>
+    <div class="grid gap-5 lg:grid-cols-3"><section class="space-y-5 lg:col-span-2">
+        <div class="rounded bg-white p-5 shadow-sm"><h2 class="mb-3 font-semibold">Lead profile</h2><dl class="grid grid-cols-2 gap-3 text-sm"><div><dt class="text-slate-500">Source</dt><dd>{{ config('crm.sources.'.$lead->source,ucfirst($lead->source)) }} {{ $lead->source_detail ? '· '.$lead->source_detail : '' }}</dd></div><div><dt class="text-slate-500">Owner</dt><dd>{{ $lead->owner?->name ?: 'Unassigned' }}</dd></div><div><dt class="text-slate-500">Industry</dt><dd>{{ $lead->industry ?: '—' }}</dd></div><div><dt class="text-slate-500">Score</dt><dd>{{ $lead->score }}/100</dd></div><div><dt class="text-slate-500">Fit</dt><dd>{{ $lead->fit_score }}/100</dd></div><div><dt class="text-slate-500">Engagement</dt><dd>{{ $lead->engagement_score }}/100</dd></div><div><dt class="text-slate-500">Next follow-up</dt><dd>{{ $erpSettings->formatDate($lead->next_follow_up_at,true) }}</dd></div><div><dt class="text-slate-500">Qualification</dt><dd>{{ $lead->authority ?: 'Authority not recorded' }} · {{ $lead->timeline ?: 'Timeline not recorded' }}</dd></div>@foreach($customFields as $field)<div><dt class="text-slate-500">{{ $field->label }}</dt><dd>{{ $lead->custom_values[$field->key] ?? '—' }}</dd></div>@endforeach</dl>@if($lead->need)<div class="mt-4"><h3 class="font-medium">Need</h3><p class="whitespace-pre-wrap">{{ $lead->need }}</p></div>@endif</div>
+        @if($lead->duplicate_of_id || $duplicates->isNotEmpty())<section class="rounded border border-amber-300 bg-amber-50 p-5"><h2 class="font-semibold">Possible duplicate review</h2>@if($lead->possibleDuplicateOf)<p class="mt-2">Currently linked to <a class="underline" href="{{ route('leads.show',$lead->possibleDuplicateOf) }}">{{ $lead->possibleDuplicateOf->reference }} — {{ $lead->possibleDuplicateOf->full_name }}</a></p>@endif @if($duplicates->isNotEmpty())<ul class="mt-2 list-disc pl-5">@foreach($duplicates as $candidate)<li><a class="underline" href="{{ route('leads.show',$candidate) }}">{{ $candidate->reference }} — {{ $candidate->full_name }} ({{ $candidate->company_name ?: 'no company' }})</a></li>@endforeach</ul>@endif @can('reviewDuplicates',$lead)<form method="POST" action="{{ route('leads.duplicates.review',$lead) }}" class="mt-4 flex flex-wrap gap-2">@csrf<select name="canonical_id" class="rounded border-slate-300"><option value="">Choose canonical record</option>@foreach($duplicates as $candidate)<option value="{{ $candidate->id }}">{{ $candidate->reference }} — {{ $candidate->full_name }}</option>@endforeach</select><button name="is_duplicate" value="1" class="rounded border px-3 py-2">Confirm duplicate</button><button name="is_duplicate" value="0" class="rounded border px-3 py-2">Mark unique</button></form>@endcan</section>@endif
+        <section class="rounded bg-white p-5 shadow-sm"><h2 class="mb-3 font-semibold">Activities and follow-ups</h2>@forelse($lead->activities->sortByDesc('created_at') as $activity)<div class="flex flex-wrap items-start justify-between gap-3 border-b py-3"><div><strong>{{ ucfirst($activity->type) }}: {{ $activity->subject }}</strong><p class="whitespace-pre-wrap text-sm text-slate-600">{{ $activity->body }}</p><small>{{ $activity->due_at ? 'Due '.$erpSettings->formatDate($activity->due_at,true) : 'No due date' }} @if($activity->completed_at) · Completed {{ $erpSettings->formatDate($activity->completed_at,true) }} @elseif($activity->due_at && $activity->due_at->isPast()) · Overdue @endif</small></div>@if($activity->type==='task' && ! $activity->completed_at)@can('update',$lead)<form method="POST" action="{{ route('leads.activities.complete',[$lead,$activity->id]) }}">@csrf<button class="rounded border px-3 py-2">Complete</button></form>@endcan @endif</div>@empty<p class="text-slate-500">No activities recorded.</p>@endforelse @can('update',$lead)<form method="POST" action="{{ route('leads.activities.store',$lead) }}" class="mt-4 grid gap-2">@csrf<select name="type" class="rounded border-slate-300"><option value="note">Note</option><option value="call">Call</option><option value="meeting">Meeting</option><option value="task">Task / follow-up</option></select><input class="rounded border-slate-300" name="subject" placeholder="Activity subject" required><textarea class="rounded border-slate-300" name="body" placeholder="Details"></textarea><label class="text-sm">Due date/time<input class="mt-1 block rounded border-slate-300" name="due_at" type="datetime-local"></label><button class="w-fit rounded bg-slate-800 px-3 py-2 text-white">Add activity</button></form>@endcan</section>
+        <section class="rounded bg-white p-5 shadow-sm"><h2 class="mb-3 font-semibold">Status history</h2>@forelse($lead->statusHistory->sortByDesc('changed_at') as $history)<div class="border-b py-2 text-sm"><strong>{{ ucfirst($history->from_status ?: 'captured') }} → {{ ucfirst($history->to_status) }}</strong><span class="text-slate-500"> · {{ $history->actor?->name ?: 'System' }} · {{ $erpSettings->formatDate($history->changed_at,true) }}</span>@if($history->notes)<p>{{ $history->notes }}</p>@endif</div>@empty<p>No status changes.</p>@endforelse</section>
+    </section><aside class="space-y-5">
+        @can('assign',$lead)<div class="rounded bg-white p-5 shadow-sm"><h2 class="mb-3 font-semibold">Assign owner</h2><form method="POST" action="{{ route('leads.assign',$lead) }}">@csrf<select name="owner_id" required class="w-full rounded border-slate-300"><option value="">Select owner</option>@foreach($owners as $owner)<option value="{{ $owner->id }}" @selected($lead->owner_id === $owner->id)>{{ $owner->name }}</option>@endforeach</select><button class="mt-2 rounded bg-slate-800 px-3 py-2 text-white">Update owner</button></form></div>@endcan
+        @if(! in_array($lead->status,['converted','disqualified'],true))@can('qualify',$lead)<div class="rounded bg-white p-5 shadow-sm"><h2 class="mb-3 font-semibold">Qualification</h2><p class="mb-3 text-sm text-slate-600">Fit and engagement scoring updates from profile completeness and recorded activity.</p><form method="POST" action="{{ route('leads.qualify',$lead) }}" class="space-y-2">@csrf<input class="w-full rounded border-slate-300" name="budget" type="number" step="0.01" value="{{ $lead->budget }}" placeholder="Budget ({{ $erpSettings->get('currency') }})"><input class="w-full rounded border-slate-300" name="authority" value="{{ $lead->authority }}" placeholder="Decision authority"><textarea class="w-full rounded border-slate-300" name="need" placeholder="Business need">{{ $lead->need }}</textarea><input class="w-full rounded border-slate-300" name="timeline" value="{{ $lead->timeline }}" placeholder="Timeline"><button class="rounded bg-indigo-600 px-3 py-2 text-white">Mark qualified</button></form></div>@endcan @can('disqualify',$lead)<form method="POST" action="{{ route('leads.disqualify',$lead) }}" class="rounded bg-white p-5 shadow-sm">@csrf<h2 class="mb-2 font-semibold">Close as disqualified</h2><input class="w-full rounded border-slate-300" name="reason" maxlength="1000" required placeholder="Reason"><button class="mt-2 rounded border px-3 py-2">Disqualify</button></form>@endcan @endif
+        @if($lead->status==='qualified')@can('convert',$lead)<form method="POST" action="{{ route('leads.convert',$lead) }}">@csrf<button class="w-full rounded bg-emerald-600 px-3 py-2 font-semibold text-white">Convert to account, contact and opportunity</button></form>@endcan @endif
+        @if($lead->opportunity)<div class="rounded bg-white p-5 shadow-sm"><h2 class="font-semibold">Conversion</h2><p>Account: {{ $lead->account?->reference ?? $lead->account?->name }}</p><p>Contact: {{ $lead->contact?->full_name ?? $lead->contact?->first_name }}</p><p>Opportunity: {{ $lead->opportunity->name }}</p></div>@endif
+    </aside></div>
 </x-layouts.app>

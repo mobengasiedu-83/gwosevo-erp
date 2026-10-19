@@ -12,17 +12,19 @@ class Lead extends Model
     public const STATUSES = ['new', 'assigned', 'qualified', 'converted', 'disqualified'];
 
     protected $fillable = [
-        'custom_values', 'organization_id', 'reference', 'first_name', 'last_name', 'email', 'phone', 'company_name',
-        'industry', 'interests', 'source', 'status', 'owner_id', 'assigned_at', 'qualified_at',
+        'custom_values', 'organization_id', 'reference', 'first_name', 'last_name', 'email', 'phone', 'phone_normalized', 'company_name',
+        'industry', 'interests', 'source', 'source_detail', 'status', 'owner_id', 'assigned_at', 'qualified_at',
         'budget', 'authority', 'need', 'timeline', 'score', 'next_follow_up_at', 'converted_at',
-        'account_id', 'contact_id', 'opportunity_id', 'created_by', 'updated_by',
+        'account_id', 'contact_id', 'opportunity_id', 'duplicate_of_id', 'duplicate_reviewed_by', 'duplicate_reviewed_at',
+        'fit_score', 'engagement_score', 'disqualified_at', 'disqualification_reason', 'archived_at', 'follow_up_reminder_sent_at', 'follow_up_escalated_at', 'created_by', 'updated_by',
     ];
 
     protected function casts(): array
     {
         return [
             'custom_values' => 'array', 'assigned_at' => 'datetime', 'qualified_at' => 'datetime', 'next_follow_up_at' => 'datetime',
-            'converted_at' => 'datetime', 'budget' => 'decimal:2',
+            'converted_at' => 'datetime', 'duplicate_reviewed_at' => 'datetime', 'disqualified_at' => 'datetime',
+            'archived_at' => 'datetime', 'follow_up_reminder_sent_at' => 'datetime', 'follow_up_escalated_at' => 'datetime', 'budget' => 'decimal:2',
         ];
     }
 
@@ -39,6 +41,16 @@ class Lead extends Model
     public function activities(): HasMany
     {
         return $this->hasMany(LeadActivity::class);
+    }
+
+    public function possibleDuplicateOf(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'duplicate_of_id');
+    }
+
+    public function possibleDuplicates(): HasMany
+    {
+        return $this->hasMany(self::class, 'duplicate_of_id');
     }
 
     public function statusHistory(): HasMany

@@ -1,12 +1,12 @@
 # GWO SEVO ERP
 
-Laravel 12, Blade and Livewire ERP for GWO SEVO Solutions. Modules 01 (System Administration and Configuration), 02 (Identity, Users, Roles and Permissions), and 03 (Organization, Departments and Branches) are installed alongside the current CRM lead foundation.
+Laravel 12, Blade and Livewire ERP for GWO SEVO Solutions. Modules 01–07 are installed: system administration, identity and access, organization structure, CRM lead management, sales pipeline, quotations/contracts/client onboarding, and contact centre with VitalPBX event intake.
 
 The UI follows the GWO SEVO website's green/red/yellow/charcoal brand, using local logos, imagery, Inter and Poppins. It includes responsive workspace navigation, keyboard quick navigation (Ctrl/Cmd K), branded authentication pages and accessible confirmation dialogs. It honors reduced-motion preferences.
 
 ## User documentation
 
-Read the [complete user guide](docs/user-guide/README.md) for sign-in, navigation, Modules 01–03, current CRM lead workflows, administration, troubleshooting and setup. The [22-module catalogue and roadmap](docs/user-guide/module-roadmap.md) identifies installed, partial and planned capabilities.
+Read the [complete user guide](docs/user-guide/README.md) for sign-in, navigation, Modules 01–07, administration, troubleshooting and setup. The [22-module catalogue and roadmap](docs/user-guide/module-roadmap.md) identifies installed, partial and planned capabilities.
 
 ## Current local installation
 

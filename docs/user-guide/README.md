@@ -1,9 +1,9 @@
 # GWO SEVO ERP — User Guide
 
-**Edition:** 17 October 2026 · **Audience:** staff, supervisors, reviewers and administrators  
+**Edition:** 19 October 2026 · **Audience:** staff, supervisors, reviewers and administrators
 **Application:** <https://localhost/gwosevo-erp/public/>
 
-This guide describes the application currently installed in this repository. Modules 01–03 are installed. Module 04 has a working lead-management foundation, not its complete specification. Modules 05–22 are planned and have no operational user screens yet. Their feature catalogue is included in the [module roadmap](module-roadmap.md); those descriptions are requirements, not instructions for functions already available.
+This guide describes the application currently installed in this repository. Modules 01–07 are installed. Modules 08–22 remain planned and do not have operational user screens yet. Their feature catalogue is included in the [module roadmap](module-roadmap.md); those descriptions are requirements, not instructions for functions already available.
 
 The names “superadmin” and “Administrator” refer here to the existing Administrator account/role. This guide contains no account passwords, invitation tokens or integration secrets.
 
@@ -14,13 +14,16 @@ The names “superadmin” and “Administrator” refer here to the existing Ad
 3. [Module 01 — System administration and configuration](#module-01--system-administration-and-configuration)
 4. [Module 02 — Identity, users, roles and permissions](#module-02--identity-users-roles-and-permissions)
 5. [Module 03 — Organization, departments and branches](#module-03--organization-departments-and-branches)
-6. [Module 04 — Current CRM lead workflows](#module-04--current-crm-lead-workflows)
-7. [Modules 05–22 — Planned capabilities](#modules-0522--planned-capabilities)
-8. [Daily and periodic routines](#daily-and-periodic-routines)
-9. [Troubleshooting](#troubleshooting)
-10. [Administrator setup checklist](#administrator-setup-checklist)
-11. [Glossary](#glossary)
-12. [Technical and commissioning notes](#technical-and-commissioning-notes)
+6. [Module 04 — Current CRM lead workflows](#module-04--crm-and-lead-management)
+7. [Module 05 — Sales pipeline and opportunities](#module-05--sales-pipeline-and-opportunities)
+8. [Module 06 — Quotations, contracts and client onboarding](#module-06--quotations-contracts-and-client-onboarding)
+9. [Module 07 — Contact centre and VitalPBX](#module-07--contact-centre-and-vitalpbx)
+10. [Modules 08–22 — Planned capabilities](#modules-0822--planned-capabilities)
+11. [Daily and periodic routines](#daily-and-periodic-routines)
+12. [Troubleshooting](#troubleshooting)
+13. [Administrator setup checklist](#administrator-setup-checklist)
+14. [Glossary](#glossary)
+15. [Technical and commissioning notes](#technical-and-commissioning-notes)
 
 ## Getting started and navigation
 
@@ -345,53 +348,116 @@ If deactivation is blocked, inspect child organizations/departments/positions/ce
 
 Structure changes are audited under **System configuration → Audit history**.
 
-## Module 04 — Current CRM lead workflows
+## Module 04 — CRM and lead management
 
-**Status:** available lead foundation; the complete Module 04 specification is not yet installed. **Open:** Commercial → **CRM leads**. Required permissions and record scope apply to each action.
+**Status:** Installed. Open Commercial → **CRM leads**. All lead lists, reports, imports, duplicate candidates and actions use your active organization and record-access scope.
 
-### Capture and find a lead
+### Capture a lead
 
-1. Open the creation action on the lead list or **Capture a lead** on the dashboard.
-2. Enter required first/last name and lead source.
-3. Add email, phone, company, industry, interests, next follow-up and required custom fields as applicable.
-4. Save. The application generates a lead reference and marks it new.
-5. Use list search for first name, last name or company, then open the lead.
+1. Choose **Capture lead**.
+2. Enter the contact and company details, source, and optional source detail. Add custom fields when configured.
+3. Save. The system creates a reference, calculates fit and engagement scores, detects possible duplicate contacts, and assigns the lead by matching rule or round-robin when an eligible owner is available.
 
-Available source labels include manual, website, API, referral, inbound call and event. Selecting a source records a classification; it does not install website capture, an ingestion API or a telephone integration.
+Available sources are Manual, Website, API, Approved import, Referral, Inbound call, Event and Campaign. Source detail can identify the event, referring person or campaign. Website and API captures are provided by signed/authorized server integrations; a source label alone does not create an integration.
 
-### Edit and assign
+### Search and filter
 
-Open an accessible lead and choose its edit action, change details and save. Use the owner-assignment form to select an eligible active owner and submit. Assigning a new lead changes it to assigned; assignment does not reset an already qualified/converted status. The lead's organization and your scope still control visibility.
+Use the CRM leads list to search names, company, email and phone. Filter by status or source. Users with archive permission can include archived leads and restore them. Opening a lead shows its profile, score components, activities, status history, conversion links and any duplicate review flags.
+
+### Assign and qualify
+
+Owners can be assigned manually from the lead page. Administrators or users with **Lead assignment rules** access can create source/industry rules; lower priority numbers run first. Leads without a matching rule rotate among active CRM members in the organization.
+
+Enter budget, decision authority, business need and timeline in **Qualification**. Marking the lead qualified records the status change. Fit score reflects profile and qualification completeness. Engagement score reflects recorded activities and completed tasks. The total uses the configured fit/engagement weights (defaults: 60/40).
+
+### Review possible duplicates
+
+The system flags same-organization matches on normalized phone number, case-insensitive email or exact company name. It does not merge or delete records. A user with duplicate-review permission can link a lead to an accessible canonical record, or mark it unique. Resolve duplicate flags before conversion when appropriate.
 
 ### Record activities and follow-ups
 
-On the lead detail page, add a call, meeting, note or task with a subject, optional body and due date. Review the activity history after saving. Maintain **Next follow-up** on the lead record for the dashboard's follow-up list. An activity's due date and the lead's next-follow-up date are separate fields; creating an activity does not automatically update the latter.
+Add calls, meetings, notes and tasks to the activity timeline. Give tasks a due date/time, then mark them complete from the lead page. Set **Next follow-up** on the lead profile for a separate lead-level reminder. The scheduler sends in-app reminders every 15 minutes and escalates overdue follow-ups after the configured number of hours (default 24). Escalation goes to an authorized reporting manager, or an Administrator if no suitable manager can access the lead. The scheduler must be running for reminders and escalations to be delivered.
 
-### Qualify
+### Import leads
 
-Record budget, authority, need, timeline and a score from 0 to 100 using the qualification form. Submit to mark the lead qualified and record its status history. Converted/disqualified leads cannot be qualified through this action. Scoring is manually entered in this foundation; there is no automatic engagement-scoring engine yet.
+Users with import permission can upload a UTF-8 CSV (up to 4 MB and 1,000 data rows) with `first_name` and `last_name`. Optional columns are `email`, `phone`, `company_name`, `industry` and `interests`. Review the valid-row preview and any row errors before committing. Imported leads are tagged **Approved import**, automatically assigned, scored and checked for possible duplicates. A preview belongs to your session and active organization; if it expires or you switch organizations, upload it again.
 
-### Convert
+### Website and API integrations
 
-1. Confirm the lead is qualified and company/contact details are accurate.
-2. Use **Convert** when you have conversion permission.
-3. Review the converted status and generated commercial references/details.
+- **Website capture:** `POST /api/v1/leads/capture/{organization-code}` accepts validated JSON, signed with HMAC-SHA256 in `X-CRM-Signature`. The shared secret is `CRM_WEBSITE_CAPTURE_SECRET`. Keep the secret on a trusted server and proxy browser form submissions through that server. Send a unique `Idempotency-Key` with each submission.
+- **Authenticated API capture:** `POST /api/v1/leads` uses a Sanctum token whose user has `leads.create` and an active organization. Send a unique `Idempotency-Key`; repeat submissions return the existing lead when the payload is unchanged and return conflict when the same key is reused with different data.
 
-Conversion creates or reuses the organization/company account by name, creates a contact and opportunity, and links them to the lead. Only qualified leads can be converted. These linked records are a commercial foundation, not a full sales-pipeline or customer-management workspace.
+Website capture is disabled until the operator sets the secret in `.env` and clears the configuration cache. Both endpoints are rate limited. Keep credentials out of browser code and logs.
 
-### Current limits
+### Convert, disqualify and archive
 
-Rules-based/round-robin assignment, approved lead imports, duplicate-detection workflows, automatic scoring, escalation, comprehensive CRM reporting and external capture integrations are not supplied by the current foundation. Module 01 reference import cannot be used to import leads. There is no supported lead-archive/delete action in the current UI. See [Module 04's planned feature catalogue](module-roadmap.md#module-04-crm--lead-management).
+Only qualified leads can be converted. Conversion creates or reuses an account, creates a contact and opportunity, links the records, and audits the result. Disqualify a lead with a reason when it should not proceed. Archive records to remove them from normal lists without deleting their history; authorized users can restore them.
 
-## Modules 05–22 — Planned capabilities
+### Reports
 
-These modules do not yet have operational screens in this installation. Do not expect an icon, permission or reserved sequence to enable their workflows. The [complete module roadmap](module-roadmap.md) lists every specified module and feature, including the distinction between current foundations and future work.
+Open **Reports** for lead totals by source and status, conversion rate, ageing bands and owner productivity. Metrics and CSV export respect your record scope. CSV export requires the separate export permission.
+
+## Module 05 — Sales pipeline and opportunities
+
+**Status:** Installed. Open Commercial → **Sales pipeline**. Records, forecasts and reports are restricted to your active organization and opportunity access scope.
+
+### Configure the sales catalog
+
+An Administrator opens **Pipeline setup** and configures the four approved strategic service lines and seven approved integrated service packages. The supplied specifications do not include their names, so they are not fabricated or preloaded. Codes must be unique within the organization. The setup page also lets Administrators adjust stage labels, order and default probability. Move opportunities out of a stage before deactivating it.
+
+Set up quotas under **Sales targets**. Select exactly one person or team and define the target period and revenue/pipeline amounts. Reports compare authorized won revenue and open pipeline for the target period.
+
+### Create and manage opportunities
+
+1. Choose **New opportunity** or open a qualified lead and use its conversion action. Lead conversion creates an opportunity in the **New** stage.
+2. Enter the deal name, account/contact, owner, amount, expected close date and configured service line/package.
+3. Move the opportunity through New, Contacted, Qualified, Needs Assessment, Proposal/Quotation Sent, Negotiation, Awaiting Customer Decision, Won, Lost or On Hold. Probability follows the configured stage value.
+4. Add calls, meetings, notes and tasks on the opportunity page. Due tasks appear on the workspace dashboard; scheduled reminders require the Laravel scheduler.
+5. Record competitor names and notes. A loss requires a reason. Won/Lost opportunities are closed and cannot be reopened through the pipeline.
+
+Use the Kanban board and table to review the pipeline. The weighted forecast is amount multiplied by stage probability. Stage history and commercial changes are audited.
+
+### Request commercial approval
+
+On an opportunity, submit the discount percentage or nonstandard terms with a justification. An authorized approver reviews and records approval or rejection; requesters cannot decide their own request. A pending request blocks closing Won. Nonstandard terms or a declined discount require an approved request before Won. Each discount or special-terms request follows this approval step.
+
+### Forecasts and reports
+
+Open **Forecast & reports** for stage totals, weighted open value, win rate, average won-deal sales cycle and person/team target attainment. CSV export respects the same access scope. A weekly scheduler captures dated opportunity forecasts. Forecast accuracy compares the last available weighted forecast captured before a month begins with Won value recorded for that month; it will show **Collecting** until a completed month has a preceding snapshot.
+
+### Setup and access boundaries
+
+The Module 05 migration enables the module. The permission seeder grants opportunity view/create/update/assign/report permissions to Sales, approval/report permissions to Finance, view to Read Only, and all Module 05 permissions to Administrator. It adds these grants without removing other role permissions. Administrators manage the service catalog, stages and quotas. Review direct permissions and organization scope when access is insufficient.
+
+The host must run Laravel's scheduler for weekly forecast snapshots and 15-minute due-action reminders. Existing lead-conversion opportunities receive references and initial stage history during migration. Quotations, contracts and client onboarding are implemented in Module 06.
+
+## Module 06 — Quotations, contracts and client onboarding
+
+**Status:** Installed. Open Commercial → **Quotes & contracts**. Access follows your active organization and opportunity data scope. See the [Module 06 operations guide](../module-six.md).
+
+Create a quotation from an opportunity. Add fixed, recurring, usage-based or negotiated pricing lines, then submit the draft with a justification for independent approval. Approved and rejected quotes are preserved; make changes by creating a new version. Use **Print / Save PDF** for a customer-ready quote.
+
+Create a contract draft from an approved quote. Add its term, renewal date, SLA, deliverables and approved template, then upload the signed agreement before activating it. Maintain onboarding checklist items and private documents; explicitly mark material client-visible before generating an expiring client link. Handover requires all checklist items complete or approved, and another user must accept it.
+
+The system sends renewal reminders for active contracts within 30 days and lets authorized users create a linked renewal opportunity. Run the host Laravel scheduler daily. The module does not calculate tax, execute electronic signatures, or supply legal contract language or pricing thresholds. Configure company-approved templates, pricing rules and role permissions before live use.
+
+## Module 07 — Contact centre and VitalPBX
+
+**Status:** Installed. Open Operations → **Contact centre**. Records and matching are scoped to the active organization.
+
+The screen provides call and queue summaries, inbound/outbound/missed/abandoned call logging, customer matching by phone, disposition notes and follow-up time, agent extension mappings, agent availability, QA forms and 0–5 evaluation scoring. `calls.view` grants view access; `calls.disposition` allows call logging and disposition; `calls.configure` manages PBX profiles and mappings; `calls.qa.manage` manages QA; and `calls.recordings.view` reveals recording references. Administrator receives all permissions; Support gets view/disposition; Operations gets view/disposition/supervise. Review role assignments before use.
+
+To commission a provider, an authorized user creates a PBX profile. The webhook signing secret is shown once in the success message; store it in the approved PBX configuration. Set the approved HTTPS API base URL, then activate the profile to accept signed inbound events at `/api/v1/pbx/{connection}/events`. Requests use `X-PBX-Timestamp` and `X-PBX-Signature`, where the signature is HMAC-SHA256 over `<timestamp>.<raw request body>` using the profile secret; timestamps must be within five minutes. Events are rate limited. The supported payloads are `call.completed` and `agent.activity`; consult the integration owner before mapping VitalPBX/Asterisk events to them.
+
+**Provider commissioning remains required:** the source specification says the exact VitalPBX/Asterisk API, AMI/CDR/CEL feed, recording interface and lawful retention policy are to be confirmed. No live PBX call is made by this installation. Click-to-call is reserved for the approved outbound adapter and is not active yet. Recording links are stored as references only; downloads are not provided. The current screen does not offer connection testing, recording retention purge, detailed service-level targets or integration event history. Do not put AMI credentials in a browser or expose AMI to the internet.
+
+For manual calls, enter the event and number details; the ERP attempts an exact phone-digit match against the active organization. Verify caller identity before linking the call to a customer. Add a disposition and follow-up after the call. Supervisors create a quality form using one criterion per line, then score each criterion from 0 to 5.
+
+## Modules 08–22 — Planned capabilities
+
+These modules do not yet have operational screens in this installation. The [complete module roadmap](module-roadmap.md) lists every specified module and feature, including the distinction between current foundations and future work.
 
 | Module | Planned area |
-| --- | --- |
-| 05 | Sales pipeline and opportunities |
-| 06 | Quotations, contracts and client onboarding |
-| 07 | Contact centre and VitalPBX |
 | 08 | Customer support and ticketing |
 | 09 | SMS and communication management |
 | 10 | Marketing, campaigns and lead generation |
@@ -408,7 +474,7 @@ These modules do not yet have operational screens in this installation. Do not e
 | 21 | Integration and API management |
 | 22 | Security, audit, backup and monitoring |
 
-Detailed operational procedures for these modules must be written against their implemented screens and tested behavior when installed. The roadmap is not an instruction to activate or implement them now.
+Detailed operational procedures for these modules must be written against their implemented screens and verified behavior when installed. The roadmap is not an instruction to activate or implement them now.
 
 ## Daily and periodic routines
 
@@ -495,6 +561,6 @@ Current development choices are `IDENTITY_MFA_REQUIRED=false` and `ENTRA_ENABLED
 
 Run host scheduler/queue services when commissioning, verify real mail delivery and Microsoft tenant authentication, and arrange backups/restore checks and business acceptance. Application installation alone does not certify those operations. Existing credentials must be preserved; never run `migrate:fresh` against the existing installation.
 
-Further implementation references: [installation review](../module-installation-review.md), [Module 01](../module-one.md), [Module 02](../module-two.md), [Module 03](../module-three.md), and [module roadmap](module-roadmap.md).
+Further implementation references: [installation review](../module-installation-review.md), [Module 01](../module-one.md), [Module 02](../module-two.md), [Module 03](../module-three.md), [Module 04](../module-four.md), [Module 05](../module-five.md), [Module 06](../module-six.md), [Module 07](../module-seven.md), and [module roadmap](module-roadmap.md).
 
 **Guide maintenance:** update this guide and its roadmap when modules, labels, permissions, limits or external configuration change. It reflects repository behavior at the edition date, not a guarantee that all future specification requirements are implemented.

@@ -20,7 +20,7 @@ class DatabaseSeeder extends Seeder
     {
         app(PermissionRegistrar::class)->forgetCachedPermissions();
 
-        $permissions = ['leads.view', 'leads.create', 'leads.update', 'leads.assign', 'leads.qualify', 'leads.convert'];
+        $permissions = ['leads.view', 'leads.create', 'leads.update', 'leads.archive', 'leads.export', 'leads.approve', 'leads.assign', 'leads.qualify', 'leads.convert', 'leads.disqualify', 'leads.import', 'leads.reports.view', 'leads.rules.manage', 'leads.duplicate.review', 'opportunities.view', 'opportunities.create', 'opportunities.update', 'opportunities.assign', 'opportunities.approve', 'opportunities.catalog.manage', 'opportunities.targets.manage', 'opportunities.reports.view'];
         foreach ($permissions as $permission) {
             Permission::findOrCreate($permission, 'web');
         }
@@ -30,8 +30,11 @@ class DatabaseSeeder extends Seeder
         $adminRole = Role::findOrCreate('Administrator', 'web');
         $adminRole->givePermissionTo($permissions);
         $salesRole = Role::findOrCreate('Sales', 'web');
+        $salesRole->givePermissionTo(['opportunities.view', 'opportunities.create', 'opportunities.update', 'opportunities.assign', 'opportunities.reports.view']);
+        Role::findOrCreate('Finance', 'web')->givePermissionTo(['opportunities.view', 'opportunities.approve', 'opportunities.reports.view']);
+        Role::findOrCreate('Read Only', 'web')->givePermissionTo(['opportunities.view']);
         if ($salesRole->wasRecentlyCreated) {
-            $salesRole->givePermissionTo($permissions);
+            $salesRole->givePermissionTo(['leads.view', 'leads.create', 'leads.update', 'leads.assign', 'leads.qualify', 'leads.convert', 'leads.disqualify']);
         }
         $this->call(IdentitySeeder::class);
         Organization::firstOrCreate(['code' => 'GWO-SEVO'], ['name' => 'GWO SEVO Solutions', 'timezone' => 'Africa/Accra']);

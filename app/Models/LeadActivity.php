@@ -6,11 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 
 class LeadActivity extends Model
 {
-    protected $fillable = ['lead_id', 'type', 'subject', 'body', 'due_at', 'completed_at', 'created_by'];
+    protected $fillable = ['lead_id', 'type', 'subject', 'body', 'due_at', 'completed_at', 'reminder_sent_at', 'escalated_at', 'created_by'];
 
     protected function casts(): array
     {
-        return ['due_at' => 'datetime', 'completed_at' => 'datetime'];
+        return ['due_at' => 'datetime', 'completed_at' => 'datetime', 'reminder_sent_at' => 'datetime', 'escalated_at' => 'datetime'];
     }
 
     public function lead()

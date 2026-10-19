@@ -15,6 +15,15 @@ class WorkspaceNavigation
         if (app(Modules::class)->enabled('crm') && $user->can('leads.view')) {
             $groups['Commercial'] = [['label' => 'CRM leads', 'route' => 'leads.index', 'match' => 'leads.*', 'icon' => 'users']];
         }
+        if (app(Modules::class)->enabled('sales') && $user->can('opportunities.view')) {
+            $groups['Commercial'][] = ['label' => 'Sales pipeline', 'route' => 'opportunities.index', 'match' => 'opportunities.*', 'icon' => 'activity'];
+        }
+        if (app(Modules::class)->enabled('contracts') && app(Modules::class)->enabled('sales') && ($user->can('quotes.view') || $user->can('contracts.view'))) {
+            $groups['Commercial'][] = ['label' => 'Quotes & contracts', 'route' => $user->can('quotes.view') ? 'commercial.quotes.index' : 'commercial.contracts.index', 'match' => 'commercial.*', 'icon' => 'file'];
+        }
+        if (app(Modules::class)->enabled('contact_centre') && $user->can('calls.view')) {
+            $groups['Operations'][] = ['label' => 'Contact centre', 'route' => 'contact-centre.index', 'match' => 'contact-centre.*', 'icon' => 'phone'];
+        }
         $groups['Workspace'][] = ['label' => 'Organization structure', 'route' => 'structure.index', 'match' => 'structure.*', 'icon' => 'users'];
         $groups['Governance'] = [
             ['label' => 'Access reviews', 'route' => 'identity.reviews.index', 'match' => 'identity.reviews.*', 'icon' => 'file'],

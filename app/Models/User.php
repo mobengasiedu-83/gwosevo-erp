@@ -65,6 +65,11 @@ class User extends Authenticatable
         return $this->belongsTo(Organization::class, 'active_organization_id');
     }
 
+    public function pbxExtensions()
+    {
+        return $this->hasMany(PbxExtension::class);
+    }
+
     public function isActive(): bool
     {
         return $this->status === 'active';
