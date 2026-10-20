@@ -16,6 +16,7 @@ use App\Models\SmsConsent;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
@@ -146,6 +147,7 @@ class MarketingController extends Controller
         $this->saveConsent($org, $data['channel'], $destination, $data['status'], $data['source'], $data['lead_id'] ?? null, $request->user()->id);
         if ($data['channel'] === 'sms') {
             SmsConsent::updateOrCreate(['organization_id' => $org, 'phone' => $destination], ['name' => null, 'source' => 'Marketing consent: '.$data['source'], 'status' => $data['status'] === 'opted_in' ? 'opted_in' : 'opted_out', 'consented_at' => $data['status'] === 'opted_in' ? now() : null, 'opted_out_at' => $data['status'] === 'withdrawn' ? now() : null, 'updated_by' => $request->user()->id]);
+            Log::channel('sms')->info('SMS consent updated from marketing preferences.', ['organization_id' => $org, 'phone' => $destination, 'status' => $data['status'] === 'opted_in' ? 'opted_in' : 'opted_out', 'user_id' => $request->user()->id]);
         }
         return back()->with('success', 'Marketing contact preference saved.');
     }
@@ -178,6 +180,7 @@ class MarketingController extends Controller
             if ($phone && ! empty($data['sms_consent'])) {
                 $this->saveConsent($org, 'sms', $phone, 'opted_in', 'Landing page: '.$page->slug, $lead->id, null);
                 SmsConsent::updateOrCreate(['organization_id' => $org, 'phone' => $phone], ['name' => $lead->full_name, 'source' => 'Marketing landing page: '.$page->slug, 'status' => 'opted_in', 'consented_at' => now(), 'opted_out_at' => null, 'updated_by' => null]);
+                Log::channel('sms')->info('SMS consent recorded from marketing lead form.', ['organization_id' => $org, 'phone' => $phone, 'page_slug' => $page->slug]);
             }
             return $lead;
         });

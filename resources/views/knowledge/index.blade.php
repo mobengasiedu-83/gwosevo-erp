@@ -21,7 +21,7 @@
 
 <div class="content-grid">
     <section class="card"><h2>Articles</h2><div class="table-wrap"><table><thead><tr><th>Article</th><th>Space</th><th>Category</th><th>Status</th><th>Updated</th></tr></thead><tbody>
-    @forelse($articles as $article)<tr><td><a href="{{ route('knowledge.articles.show', $article->id) }}"><strong>{{ $article->title }}</strong></a>@if($article->summary)<br><span class="muted">{{ \\Illuminate\\Support\\Str::limit($article->summary, 110) }}</span>@endif</td><td>{{ $article->space_name }}</td><td>{{ $article->category_name ?: '—' }}</td><td><span class="status-badge">{{ str_replace('_', ' ', ucfirst($article->status)) }}</span></td><td>{{ $article->updated_at }}</td></tr>
+    @forelse($articles as $article)<tr><td><a href="{{ route('knowledge.articles.show', $article->id) }}"><strong>{{ $article->title }}</strong></a>@if($article->summary)<br><span class="muted">{{ \Illuminate\Support\Str::limit($article->summary, 110) }}</span>@endif</td><td>{{ $article->space_name }}</td><td>{{ $article->category_name ?: '—' }}</td><td><span class="status-badge">{{ str_replace('_', ' ', ucfirst($article->status)) }}</span></td><td>{{ $article->updated_at }}</td></tr>
     @empty<tr><td colspan="5" class="empty-state">No articles match. Create a space or draft an article to begin.</td></tr>@endforelse
     </tbody></table></div><div class="mt-4">{{ $articles->links() }}</div></section>
 

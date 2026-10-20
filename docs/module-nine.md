@@ -10,10 +10,11 @@ Add the approved TXTConnect values to `.env`:
 TXTCONNECT_BASE_URL=https://api.txtconnect.net/dev/api
 TXTCONNECT_API_KEY=
 TXTCONNECT_SENDER=
+TXTCONNECT_UNICODE=1
 TXTCONNECT_TIMEOUT=15
 ```
 
-Keep the API key out of source control. Clear cached config after changing `.env` with `php artisan config:clear`. The sending integration uses TXTConnect's documented HTTPS send endpoint with Bearer authentication. Confirm the sender ID and permitted account use with TXTConnect before enabling live sends.
+Set `TXTCONNECT_UNICODE=1` to match the supplied working Postman request; use `0` for regular SMS. The selected string value is sent in the JSON body. Keep the API key out of source control. Clear cached config after changing `.env` with `php artisan config:clear`, then restart any queue worker so it loads the updated setting. The sending integration uses TXTConnect's HTTPS send endpoint with Bearer authentication. Confirm the sender ID and permitted account use with TXTConnect before enabling live sends.
 
 ## Access and consent
 

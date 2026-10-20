@@ -17,19 +17,25 @@ use App\Jobs\SendSmsMessage;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schedule;
 
 Schedule::command('tickets:check-sla')->everyFiveMinutes()->withoutOverlapping();
 
 Artisan::command('sms:dispatch-scheduled', function () {
+    $dispatchedCampaigns = 0;
     SmsCampaign::where('status', 'scheduled')->whereNotNull('scheduled_at')->where('scheduled_at', '<=', now())
         ->orderBy('id')->chunkById(50, function ($campaigns) {
             foreach ($campaigns as $campaign) {
                 $changed = SmsCampaign::whereKey($campaign->id)->where('status', 'scheduled')->update(['status' => 'queued', 'started_at' => now()]);
                 if (! $changed) continue;
-                $campaign->messages()->where('status', 'queued')->pluck('id')->each(fn ($id) => SendSmsMessage::dispatch($id)->onQueue('sms'));
+                $messageIds = $campaign->messages()->where('status', 'queued')->pluck('id');
+                $messageIds->each(fn ($id) => SendSmsMessage::dispatch($id)->onQueue('sms'));
+                $dispatchedCampaigns++;
+                Log::channel('sms')->info('Scheduled SMS campaign dispatched.', ['campaign_id' => $campaign->id, 'organization_id' => $campaign->organization_id, 'message_count' => $messageIds->count()]);
             }
         });
+    Log::channel('sms')->info('Scheduled SMS campaign dispatch scan completed.', ['campaigns_dispatched' => $dispatchedCampaigns]);
     $this->info('Due SMS campaigns have been dispatched to the sms queue.');
 })->purpose('Queue due SMS campaigns');
 

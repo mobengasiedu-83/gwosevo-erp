@@ -21,6 +21,7 @@ use App\Http\Controllers\ProjectsController;
 use App\Http\Controllers\FinanceController;
 use App\Http\Controllers\ProcurementController;
 use App\Http\Controllers\KnowledgeController;
+use App\Http\Controllers\ReportsController;
 use App\Models\SalesPipelineStage;
 use App\Http\Controllers\CRM\LeadAssignmentRulesController;
 use App\Http\Controllers\CRM\LeadNotificationController;
@@ -49,6 +50,16 @@ Route::middleware('guest')->group(function () {
 Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
+    Route::prefix('reports')->name('reports.')->group(function () {
+        Route::get('/', [ReportsController::class, 'index'])->name('index');
+        Route::post('/custom', [ReportsController::class, 'store'])->name('custom.store');
+        Route::get('/custom/{report}', [ReportsController::class, 'run'])->whereNumber('report')->name('run');
+        Route::get('/custom/{report}/export', [ReportsController::class, 'export'])->whereNumber('report')->name('export');
+        Route::post('/kpis', [ReportsController::class, 'storeKpi'])->name('kpis.store');
+        Route::delete('/kpis/{kpi}', [ReportsController::class, 'deleteKpi'])->whereNumber('kpi')->name('kpis.delete');
+        Route::post('/schedules', [ReportsController::class, 'storeSchedule'])->name('schedules.store');
+        Route::delete('/schedules/{schedule}', [ReportsController::class, 'deleteSchedule'])->whereNumber('schedule')->name('schedules.delete');
+    });
     Route::get('/overview/{group}', GroupOverviewController::class)->whereIn('group', ['commercial', 'customer-experience', 'human-resources', 'operations-projects'])->name('group-overviews.show');
     Route::prefix('knowledge')->name('knowledge.')->group(function () {
         Route::get('/', [KnowledgeController::class, 'index'])->name('index');

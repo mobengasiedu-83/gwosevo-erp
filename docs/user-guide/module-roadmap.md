@@ -2,7 +2,7 @@
 
 **Edition:** 20 October 2026. [Return to the user guide](README.md).
 
-The feature tables below reproduce the supplied Module Feature Breakdown as a requirements reference. Modules 01–18 are installed within the boundaries explained in the user guide. Modules 19–22 are planned.
+The feature tables below reproduce the supplied Module Feature Breakdown as a requirements reference. Modules 01–19 are installed within the boundaries explained in the user guide. Modules 20–22 are planned.
 
 ## Module 01 System Administration & Configuration
 
@@ -431,7 +431,7 @@ See [Module 05 setup and user guide](../module-five.md). The specifications requ
 
 ## Module 19 Reports, Dashboards & Business Intelligence
 
-**Status:** Planned — not installed. No operational screens or end-to-end user procedures are available yet.
+**Status:** Installed locally. Open Workspace → **Reports & Insights**. Source-level report permissions and organization scoping apply to dashboards, custom reports, KPI calculations and exports. See the [Module 19 guide](../module-nineteen.md).
 
 **Purpose:** Provide permission-aware operational and executive reporting.
 
@@ -446,11 +446,11 @@ See [Module 05 setup and user guide](../module-five.md). The specifications requ
 | Finance | Receivables, collections and budgets |
 | Projects | Milestones, workload and overdue tasks |
 | Custom Reports | Filters, columns and grouping |
-| Scheduling | Authorized delivery and subscriptions |
-| Exports | CSV, Excel and PDF |
+| Scheduling | Internal recipient and frequency configuration is available; automated email delivery is inactive pending authorization |
+| Exports | CSV and browser print / Save as PDF |
 | KPI Definitions | Shared formulas and data ownership |
 
-**Before operational use:** approve the provider interface, event mapping, lawful recording policy and role assignments; configure the encrypted connection profile and signing secret; then verify events against the provider.
+**Boundaries:** reports read current organization data and do not preserve historical snapshots. CSV can be opened in Excel, but native XLSX is not implemented. Print / Save as PDF uses the browser. Automated scheduled email delivery is inactive because it would send potentially sensitive cross-module data outside the ERP. Source permissions should be assigned only after reviewing each report's data scope.
 
 ## Module 20 Notifications, Approvals & Automation
 

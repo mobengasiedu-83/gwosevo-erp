@@ -82,6 +82,9 @@ class WorkspaceNavigation
         if (app(Modules::class)->enabled('knowledge') && $user->can('knowledge.search')) {
             $groups['Knowledge & Intelligence'] = [['label' => 'Knowledge Bank & AI Search', 'route' => 'knowledge.index', 'match' => 'knowledge.*', 'icon' => 'search']];
         }
+        if (app(Modules::class)->enabled('reports') && ($user->isSuperAdmin() || $user->canAny(['reports.dashboard.view', 'reports.custom.manage', 'reports.kpis.manage', 'reports.schedules.manage', 'leads.reports.view', 'opportunities.reports.view', 'calls.view', 'tickets.reports', 'hr.reports.view', 'attendance.reports.view', 'recruitment.reports.view', 'performance.reports.view', 'finance.reports.view', 'projects.reports.view']))) {
+            $groups['Workspace'][] = ['label' => 'Reports & Insights', 'route' => 'reports.index', 'match' => 'reports.*', 'icon' => 'chart'];
+        }
         $groups['Administration'] = [
             ['label' => 'Organization structure', 'route' => 'structure.index', 'match' => 'structure.*', 'icon' => 'users'],
             ['label' => 'Access reviews', 'route' => 'identity.reviews.index', 'match' => 'identity.reviews.*', 'icon' => 'file'],

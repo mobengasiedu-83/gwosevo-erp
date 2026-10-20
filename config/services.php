@@ -32,6 +32,7 @@ return [
         'base_url' => env('TXTCONNECT_BASE_URL', 'https://api.txtconnect.net/dev/api'),
         'key' => env('TXTCONNECT_API_KEY'),
         'sender' => env('TXTCONNECT_SENDER'),
+        'unicode' => (string) env('TXTCONNECT_UNICODE', '0'),
         'timeout' => (int) env('TXTCONNECT_TIMEOUT', 15),
     ],
 

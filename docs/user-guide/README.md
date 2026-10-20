@@ -3,7 +3,7 @@
 **Edition:** 20 October 2026 · **Audience:** staff, supervisors, reviewers and administrators
 **Application:** <https://localhost/gwosevo-erp/public/>
 
-This guide describes the application currently installed in this repository. Modules 01–18 are installed within the commissioning boundaries described here. Modules 19–22 remain planned. Their feature catalogue is included in the [module roadmap](module-roadmap.md). See the [Module 18 knowledge bank guide](../module-eighteen.md) for setup and integration boundaries.
+This guide describes the application currently installed in this repository. Modules 01–19 are installed within the commissioning boundaries described here. Modules 20–22 remain planned. Their feature catalogue is included in the [module roadmap](module-roadmap.md). See the [Module 18 knowledge bank guide](../module-eighteen.md) and [Module 19 reporting guide](../module-nineteen.md) for setup and integration boundaries.
 
 The names “superadmin” and “Administrator” refer here to the existing Administrator account/role. This guide contains no account passwords, invitation tokens or integration secrets.
 
@@ -26,11 +26,12 @@ The names “superadmin” and “Administrator” refer here to the existing Ad
 14. [Module 16 — Finance and revenue](#module-16--finance-and-revenue)
 15. [Module 17 — Procurement, assets and inventory](#module-17--procurement-assets-and-inventory)
 16. [Module 18 — Knowledge bank and AI search](#module-18--knowledge-bank-and-ai-search)
-17. [Daily and periodic routines](#daily-and-periodic-routines)
-18. [Troubleshooting](#troubleshooting)
-19. [Administrator setup checklist](#administrator-setup-checklist)
-20. [Glossary](#glossary)
-21. [Technical and commissioning notes](#technical-and-commissioning-notes)
+17. [Module 19 — Reports, dashboards and business intelligence](#module-19--reports-dashboards-and-business-intelligence)
+18. [Daily and periodic routines](#daily-and-periodic-routines)
+19. [Troubleshooting](#troubleshooting)
+20. [Administrator setup checklist](#administrator-setup-checklist)
+21. [Glossary](#glossary)
+22. [Technical and commissioning notes](#technical-and-commissioning-notes)
 
 
 ## Getting started and navigation
@@ -489,10 +490,11 @@ Configure the local `.env` using the TXTConnect API key and an approved sender I
 TXTCONNECT_BASE_URL=https://api.txtconnect.net/dev/api
 TXTCONNECT_API_KEY=your_api_key
 TXTCONNECT_SENDER=your_approved_sender
+TXTCONNECT_UNICODE=1
 TXTCONNECT_TIMEOUT=15
 ```
 
-Then clear cached config with `php artisan config:clear`. The integration sends individual HTTPS POST requests to TXTConnect's documented `/sms/send` API using a Bearer token and `to`, `from`, `unicode` and `sms` fields. Credentials remain server-side. [TXTConnect API documentation](https://txtconnect.net/ApiDocumentation)
+Set `TXTCONNECT_UNICODE=1` to match the supplied working Postman request; use `0` for regular SMS. The selected string value is sent in the JSON body. Then clear cached config with `php artisan config:clear` and restart the queue worker. The integration sends individual HTTPS POST requests to TXTConnect's `/sms/send` API using a Bearer token and `to`, `from`, `unicode` and `sms` fields. Credentials remain server-side. [TXTConnect API documentation](https://txtconnect.net/ApiDocumentation)
 
 Before sending, record each phone number's explicit opt-in and the evidence source in the **Consent register**. Opt-outs suppress subsequent sends. Transactional sends and campaigns are rejected unless every target is opted in for the active organization. Add approved templates, then queue a single message or create a campaign. Campaigns support up to 5,000 explicitly entered numbers and optional future scheduling. They do not auto-import or infer consent from CRM records.
 
@@ -600,13 +602,18 @@ The spend summary groups purchase orders by currency. **Boundaries:** this is an
 
 Create a knowledge space, write an article, and submit it for review. A different reviewer must approve it and a separate publisher must publish it. Upload PDF, Word or text documents to an article; the app stores files privately and indexes extracted text when server tools support it. Optional AI answers and Microsoft 365 SharePoint sync are disabled until configured. Synced content remains unpublished until it passes the local review workflow.
 
-## Modules 19–22 — Planned capabilities
+## Module 19 — Reports, dashboards and business intelligence
+
+**Status:** Installed locally. Open Workspace → **Reports & Insights**. Summary cards, KPI definitions, custom reports, CSV export and print output use organization-scoped data and source-level report permissions. See the [Module 19 guide](../module-nineteen.md) for setup, permission names, schedules and limits.
+
+Custom reports support approved fields, grouping, measures and filters. CSV files open in spreadsheet applications; native XLSX is not included. Browser print can save a PDF. Schedule definitions can be saved and paused, but automated scheduled email delivery is inactive pending approval for sending cross-module report data outside the ERP.
+
+## Modules 20–22 — Planned capabilities
 
 These modules do not yet have operational screens in this installation. The [complete module roadmap](module-roadmap.md) lists every specified module and feature, including the distinction between current foundations and future work.
 
 | Module | Planned area |
 | --- | --- |
-| 19 | Reports, dashboards and business intelligence |
 | 20 | Notifications, approvals and automation |
 | 21 | Integration and API management |
 | 22 | Security, audit, backup and monitoring |

@@ -1,12 +1,12 @@
 # GWO SEVO ERP
 
-Laravel 12, Blade and Livewire ERP for GWO SEVO Solutions. Modules 01–18 are installed locally: system administration, identity and access, organization structure, CRM lead management, sales pipeline, quotations/contracts/client onboarding, contact centre with VitalPBX integration, customer support ticketing, TXTConnect SMS, marketing campaigns, human resources, recruitment/assessments, performance management, attendance/leave/self-service, project/task productivity, finance/revenue management, procurement/assets/inventory, and the knowledge bank with AI search.
+Laravel 12, Blade and Livewire ERP for GWO SEVO Solutions. Modules 01–19 are installed locally: system administration, identity and access, organization structure, CRM lead management, sales pipeline, quotations/contracts/client onboarding, contact centre with VitalPBX integration, customer support ticketing, TXTConnect SMS, marketing campaigns, human resources, recruitment/assessments, performance management, attendance/leave/self-service, project/task productivity, finance/revenue management, procurement/assets/inventory, the knowledge bank with AI search, and reports/dashboards/business intelligence.
 
 The UI follows the GWO SEVO website's green/red/yellow/charcoal brand, using local logos, imagery, Inter and Poppins. It includes responsive workspace navigation, keyboard quick navigation (Ctrl/Cmd K), branded authentication pages and accessible confirmation dialogs. It honors reduced-motion preferences.
 
 ## User documentation
 
-Read the [complete user guide](docs/user-guide/README.md) for sign-in, navigation, Modules 01–18, administration, troubleshooting and setup. The [22-module catalogue and roadmap](docs/user-guide/module-roadmap.md) identifies installed, partial and planned capabilities. See also the [Module 09 SMS setup guide](docs/module-nine.md), [Module 10 marketing guide](docs/module-ten.md), [Module 11 HR guide](docs/module-eleven.md), [Module 12 recruitment guide](docs/module-twelve.md), [Module 13 performance guide](docs/module-thirteen.md), [Module 14 attendance guide](docs/module-fourteen.md), [Module 15 projects guide](docs/module-fifteen.md), [Module 16 finance guide](docs/module-sixteen.md), [Module 17 procurement guide](docs/module-seventeen.md), [Module 18 knowledge bank guide](docs/module-eighteen.md).
+Read the [complete user guide](docs/user-guide/README.md) for sign-in, navigation, Modules 01–19, administration, troubleshooting and setup. The [22-module catalogue and roadmap](docs/user-guide/module-roadmap.md) identifies installed, partial and planned capabilities. See also the [Module 09 SMS setup guide](docs/module-nine.md), [Module 10 marketing guide](docs/module-ten.md), [Module 11 HR guide](docs/module-eleven.md), [Module 12 recruitment guide](docs/module-twelve.md), [Module 13 performance guide](docs/module-thirteen.md), [Module 14 attendance guide](docs/module-fourteen.md), [Module 15 projects guide](docs/module-fifteen.md), [Module 16 finance guide](docs/module-sixteen.md), [Module 17 procurement guide](docs/module-seventeen.md), [Module 18 knowledge bank guide](docs/module-eighteen.md), [Module 19 reporting guide](docs/module-nineteen.md).
 
 ## Current local installation
 
@@ -40,6 +40,6 @@ Run the Laravel scheduler once a minute and the configured queue worker/Horizon 
 
 Reference import/export supports CSV and XLSX, up to 1,000 data rows and 2 MB. The first workbook worksheet is resolved through its relationships. PDF output uses the branded print template and the browser's Save as PDF option.
 
-All three modules are installed, but external SSO acceptance, mail-delivery acceptance, continuous workers/scheduler, production backup/restore and business UAT remain deployment responsibilities. Future-module sequence definitions and permission names do not mean those business modules are installed.
+Modules 01–19 are installed locally. External SSO and mail-delivery acceptance, continuous workers/scheduler, production backup/restore and business UAT remain deployment responsibilities. Future-module sequence definitions and permission names do not mean those business modules are installed.
 
 See [installation review](docs/module-installation-review.md), [Module 01](docs/module-one.md) and [Module 02](docs/module-two.md) and [Module 03](docs/module-three.md) for implementation details and boundaries.

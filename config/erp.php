@@ -20,7 +20,7 @@ return [
         'finance' => ['name' => '16 · Finance, Invoicing & Revenue Management', 'available' => true],
         'procurement' => ['name' => '17 · Procurement, Assets & Inventory', 'available' => true],
         'knowledge' => ['name' => '18 · Knowledge Bank & AI Search', 'available' => true],
-        'reports' => ['name' => '19 · Reports, Dashboards & Business Intelligence', 'available' => false],
+        'reports' => ['name' => '19 · Reports, Dashboards & Business Intelligence', 'available' => true],
         'automation' => ['name' => '20 · Notifications, Approvals & Automation', 'available' => false],
         'integrations' => ['name' => '21 · Integration & API Management', 'available' => false],
         'security' => ['name' => '22 · Security, Audit, Backup & Monitoring', 'available' => false],

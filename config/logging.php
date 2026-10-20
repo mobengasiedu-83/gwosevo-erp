@@ -74,6 +74,15 @@ return [
             'replace_placeholders' => true,
         ],
 
+        'sms' => [
+            'driver' => 'single',
+            'path' => storage_path('logs/sms.log'),
+            'level' => env('SMS_LOG_LEVEL', 'info'),
+            'permission' => 0600,
+            'locking' => true,
+            'replace_placeholders' => true,
+        ],
+
         'daily' => [
             'driver' => 'daily',
             'path' => storage_path('logs/laravel.log'),

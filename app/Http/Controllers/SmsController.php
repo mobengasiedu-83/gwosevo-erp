@@ -10,6 +10,7 @@ use App\Models\SmsMessage;
 use App\Models\SmsTemplate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
@@ -41,6 +42,7 @@ class SmsController extends Controller
         $this->enabled(); abort_unless($request->user()->can('sms.manage'), 403); $org = $this->org($request);
         $data = $request->validate(['name' => ['required','string','max:120'], 'category' => ['required', Rule::in(['transactional','campaign'])], 'body' => ['required','string','max:1600']]);
         SmsTemplate::updateOrCreate(['organization_id' => $org, 'name' => $data['name']], [...$data, 'is_active' => true, 'created_by' => $request->user()->id]);
+        Log::channel('sms')->info('SMS template saved.', ['organization_id' => $org, 'template_name' => $data['name'], 'category' => $data['category'], 'user_id' => $request->user()->id]);
         return back()->with('success', 'SMS template saved.');
     }
 
@@ -54,33 +56,47 @@ class SmsController extends Controller
             ...$data, 'consented_at' => $data['status'] === 'opted_in' ? $now : null,
             'opted_out_at' => $data['status'] === 'opted_out' ? $now : null, 'updated_by' => $request->user()->id,
         ]);
+        Log::channel('sms')->info('SMS consent preference saved.', ['organization_id' => $org, 'phone' => $data['phone'], 'status' => $data['status'], 'source' => $data['source'], 'user_id' => $request->user()->id]);
         return back()->with('success', 'SMS consent preference saved.');
     }
 
     public function send(Request $request)
     {
         $this->enabled(); abort_unless($request->user()->can('sms.send'), 403); $org = $this->org($request);
-        abort_unless($this->configured(), 422, 'Configure TXTCONNECT_API_KEY and TXTCONNECT_SENDER in .env before sending.');
+        if (! $this->configured()) {
+            Log::channel('sms')->warning('SMS send blocked because TXTConnect is not configured.', ['organization_id' => $org, 'user_id' => $request->user()->id]);
+            abort(422, 'Configure TXTCONNECT_API_KEY and TXTCONNECT_SENDER in .env before sending.');
+        }
         $data = $request->validate(['phone' => ['required','string','max:40'], 'body' => ['required_without:template_id','nullable','string','max:1600'], 'template_id' => ['nullable','integer'], 'contact_id' => ['nullable','integer'], 'ticket_id' => ['nullable','integer']]);
         $phone = $this->normalizePhone($data['phone']);
-        abort_unless(SmsConsent::where('organization_id', $org)->where('phone', $phone)->where('status', 'opted_in')->exists(), 422, 'This number is not opted in for SMS. Record valid consent first.');
+        if (! SmsConsent::where('organization_id', $org)->where('phone', $phone)->where('status', 'opted_in')->exists()) {
+            Log::channel('sms')->warning('SMS send blocked because recipient has no active opt-in consent.', ['organization_id' => $org, 'phone' => $phone, 'user_id' => $request->user()->id]);
+            abort(422, 'This number is not opted in for SMS. Record valid consent first.');
+        }
         $this->validateRecords($org, $data);
         $body = $this->resolveBody($org, $data, 'transactional');
         $message = SmsMessage::create(['organization_id' => $org, 'contact_id' => $data['contact_id'] ?? null, 'ticket_id' => $data['ticket_id'] ?? null, 'to' => $phone, 'sender' => config('services.txtconnect.sender'), 'body' => $body, 'status' => 'queued', 'idempotency_key' => (string) Str::uuid(), 'created_by' => $request->user()->id]);
         SendSmsMessage::dispatch($message->id)->onQueue('sms');
+        Log::channel('sms')->info('SMS queued.', ['message_id' => $message->id, 'organization_id' => $org, 'phone' => $phone, 'sender' => config('services.txtconnect.sender'), 'body' => $body, 'contact_id' => $message->contact_id, 'ticket_id' => $message->ticket_id, 'queue' => 'sms', 'queue_connection' => config('queue.default'), 'user_id' => $request->user()->id]);
         return back()->with('success', 'SMS queued for '.$phone.'.');
     }
 
     public function campaign(Request $request)
     {
         $this->enabled(); abort_unless($request->user()->can('sms.campaigns.manage'), 403); $org = $this->org($request);
-        abort_unless($this->configured(), 422, 'Configure TXTConnect in .env before scheduling campaigns.');
+        if (! $this->configured()) {
+            Log::channel('sms')->warning('SMS campaign blocked because TXTConnect is not configured.', ['organization_id' => $org, 'user_id' => $request->user()->id]);
+            abort(422, 'Configure TXTConnect in .env before scheduling campaigns.');
+        }
         $data = $request->validate(['name' => ['required','string','max:160'], 'body' => ['required_without:template_id','nullable','string','max:1600'], 'template_id' => ['nullable','integer'], 'phones' => ['required','string','max:100000'], 'scheduled_at' => ['nullable','date','after_or_equal:now']]);
         $body = $this->resolveBody($org, $data, 'campaign');
         $phones = collect(preg_split('/[\r\n,;]+/', $data['phones']))->map(fn ($phone) => trim($phone))->filter()->map(fn ($phone) => $this->normalizePhone($phone))->unique()->values();
         abort_if($phones->isEmpty() || $phones->count() > 5000, 422, 'Enter between 1 and 5,000 recipient numbers.');
         $consented = SmsConsent::where('organization_id', $org)->where('status', 'opted_in')->whereIn('phone', $phones)->pluck('phone')->all();
-        abort_if(count($consented) !== $phones->count(), 422, 'Every campaign recipient must have an active opted-in consent record.');
+        if (count($consented) !== $phones->count()) {
+            Log::channel('sms')->warning('SMS campaign blocked because one or more recipients lack active opt-in consent.', ['organization_id' => $org, 'recipient_count' => $phones->count(), 'consented_count' => count($consented), 'user_id' => $request->user()->id]);
+            abort(422, 'Every campaign recipient must have an active opted-in consent record.');
+        }
         $scheduled = ! empty($data['scheduled_at']) ? \Illuminate\Support\Carbon::parse($data['scheduled_at']) : null;
         $campaign = DB::transaction(function () use ($request, $org, $data, $body, $phones, $scheduled) {
             $campaign = SmsCampaign::create(['organization_id' => $org, 'name' => $data['name'], 'body' => $body, 'status' => $scheduled ? 'scheduled' : 'queued', 'scheduled_at' => $scheduled, 'started_at' => $scheduled ? null : now(), 'created_by' => $request->user()->id]);
@@ -90,19 +106,33 @@ class SmsController extends Controller
             return $campaign;
         });
         if (! $scheduled) $campaign->messages()->pluck('id')->each(fn ($id) => SendSmsMessage::dispatch($id)->onQueue('sms'));
+        Log::channel('sms')->info($scheduled ? 'SMS campaign scheduled.' : 'SMS campaign queued.', ['campaign_id' => $campaign->id, 'organization_id' => $org, 'recipient_count' => $phones->count(), 'scheduled_at' => $scheduled?->toIso8601String(), 'user_id' => $request->user()->id]);
         return back()->with('success', 'Campaign created for '.$phones->count().' opted-in recipients.'.($scheduled ? ' It will be queued at the scheduled time.' : ' Messages are queued.'));
     }
 
     public function retry(Request $request, SmsMessage $message)
     {
         $this->enabled(); abort_unless($request->user()->can('sms.manage'), 403); abort_unless($message->organization_id === $this->org($request), 404);
-        abort_unless($message->status === 'failed', 422, 'Only a failed message can be manually retried.');
-        abort_unless($message->attempts < 3, 422, 'This message has reached its three-attempt limit.');
-        abort_unless($this->configured(), 422, 'Configure TXTConnect in .env before retrying.');
+        if ($message->status !== 'failed') {
+            Log::channel('sms')->warning('SMS retry blocked because message is not failed.', ['message_id' => $message->id, 'organization_id' => $message->organization_id, 'status' => $message->status, 'user_id' => $request->user()->id]);
+            abort(422, 'Only a failed message can be manually retried.');
+        }
+        if ($message->attempts >= 3) {
+            Log::channel('sms')->warning('SMS retry blocked because attempt limit was reached.', ['message_id' => $message->id, 'organization_id' => $message->organization_id, 'attempts' => $message->attempts, 'user_id' => $request->user()->id]);
+            abort(422, 'This message has reached its three-attempt limit.');
+        }
+        if (! $this->configured()) {
+            Log::channel('sms')->warning('SMS retry blocked because TXTConnect is not configured.', ['message_id' => $message->id, 'organization_id' => $message->organization_id, 'user_id' => $request->user()->id]);
+            abort(422, 'Configure TXTConnect in .env before retrying.');
+        }
         $consented = SmsConsent::where('organization_id', $message->organization_id)->where('phone', $message->to)->where('status', 'opted_in')->exists();
-        abort_unless($consented, 422, 'Recipient no longer has active SMS consent.');
+        if (! $consented) {
+            Log::channel('sms')->warning('SMS retry blocked because recipient consent is no longer active.', ['message_id' => $message->id, 'organization_id' => $message->organization_id, 'phone' => $message->to, 'user_id' => $request->user()->id]);
+            abort(422, 'Recipient no longer has active SMS consent.');
+        }
         $message->update(['status' => 'queued', 'failure_reason' => null, 'provider_response' => null]);
         SendSmsMessage::dispatch($message->id)->onQueue('sms');
+        Log::channel('sms')->info('Failed SMS manually queued for retry.', ['message_id' => $message->id, 'organization_id' => $message->organization_id, 'phone' => $message->to, 'attempts' => $message->attempts, 'user_id' => $request->user()->id]);
         return back()->with('success', 'Message queued for one controlled retry.');
     }
 
