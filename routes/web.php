@@ -28,6 +28,7 @@ Route::middleware('auth')->group(function () {
     Route::prefix('contact-centre')->name('contact-centre.')->group(function () {
         Route::get('/', [ContactCentreController::class, 'index'])->name('index');
         Route::post('/calls', [ContactCentreController::class, 'storeCall'])->name('calls.store');
+        Route::post('/calls/dial', [ContactCentreController::class, 'dial'])->middleware('throttle:10,1')->name('calls.dial');
         Route::put('/calls/{call}/disposition', [ContactCentreController::class, 'disposition'])->whereNumber('call')->name('calls.disposition');
         Route::post('/connections', [ContactCentreController::class, 'connect'])->name('connections.store');
         Route::post('/connections/{connection}/extensions/sync', [ContactCentreController::class, 'syncExtensions'])->whereNumber('connection')->name('connections.extensions.sync');

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Domain\ContactCentre\VitalPbxCallHistory;
+use App\Domain\ContactCentre\VitalPbxDialer;
 use App\Domain\ContactCentre\VitalPbxExtensions;
 use App\Models\Account;
 use App\Models\CallEvaluation;
@@ -30,8 +31,34 @@ class ContactCentreController extends Controller
         $queues=CallRecord::where('organization_id',$org)->whereNotNull('queue')->distinct()->orderBy('queue')->pluck('queue');
         $agents=User::where('status','active')->whereHas('organizations',fn($q)=>$q->whereKey($org))->with(['pbxExtensions'=>fn($q)=>$q->whereHas('connection',fn($c)=>$c->where('organization_id',$org))])->orderBy('name')->get();
         $connections=PbxConnection::where('organization_id',$org)->with('extensions.user')->latest()->get();
+        $dialMappings=PbxExtension::with('connection')->where('user_id',$request->user()->id)->whereHas('connection',fn($q)=>$q->where('organization_id',$org)->where('driver','vitalpbx'))->orderBy('extension')->get();
         $forms=CallEvaluationForm::where('organization_id',$org)->where('is_active',true)->get();
-        return view('contact-centre.index',compact('calls','stats','queues','agents','connections','forms'));
+        return view('contact-centre.index',compact('calls','stats','queues','agents','connections','forms','dialMappings'));
+    }
+
+    public function dial(Request $request, VitalPbxDialer $dialer)
+    {
+        $this->enabled();
+        abort_unless($request->user()->can('calls.dial'), 403);
+        $org = $this->org($request);
+        $data = $request->validate([
+            'extension_id' => ['required', 'integer'],
+            'destination' => ['required', 'regex:/^[0-9*#+]{2,32}$/'],
+        ], ['destination.regex' => 'Enter a phone number or extension using digits, *, #, or + (2–32 characters).']);
+
+        $mapping = PbxExtension::with('connection')->whereKey($data['extension_id'])
+            ->where('user_id', $request->user()->id)
+            ->whereHas('connection', fn ($query) => $query->where('organization_id', $org)->where('driver', 'vitalpbx'))
+            ->firstOrFail();
+
+        try {
+            $result = $dialer->dial($mapping->connection, $mapping->extension, $data['destination']);
+        } catch (\RuntimeException $exception) {
+            return back()->withErrors(['dial' => $exception->getMessage()])->withInput();
+        }
+
+        $callId = data_get($result, 'variables.callId') ?: data_get($result, 'callId');
+        return back()->with('success', 'Call request sent to VitalPBX. Your extension '.$mapping->extension.' should ring first.'.($callId ? ' Call ID: '.$callId : ''));
     }
 
     public function storeCall(Request $request)
@@ -158,6 +185,6 @@ class ContactCentreController extends Controller
     {
         $this->enabled();abort_unless($request->user()->can('calls.configure'),403);abort_unless((int)$connection->organization_id===$this->org($request),404);
         abort_if(!$connection->base_url,422,'Add the approved provider API base URL before activating this profile.');
-        $connection->update(['is_active'=>true]);return back()->with('success','PBX profile activated for signed inbound events. Outbound dialing remains unavailable until the approved API adapter is configured.');
+        $connection->update(['is_active'=>true]);return back()->with('success','PBX profile activated for signed inbound events.');
     }
 }

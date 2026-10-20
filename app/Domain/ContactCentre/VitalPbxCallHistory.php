@@ -57,15 +57,27 @@ class VitalPbxCallHistory
         try {
             for ($page = 0; $page < 100; $page++) {
                 $response = $request->get($baseUrl.'/api/v2/cdr', [
+                    'calltype' => '1,2,3,4',
                     'start_date' => $start->timestamp,
                     'end_date' => $end->timestamp,
                     'limit' => $offset.','.$pageSize,
                     'order_by' => 'calldate',
                     'order_type' => 'desc',
+                    'call_history' => 'no',
                 ]);
 
                 if (! $response->successful()) {
-                    throw new RuntimeException('VitalPBX call history API returned HTTP '.$response->status().'. Check the API key, tenant, and CDR API permissions.');
+                    $detail = $this->providerError($response->json(), $apiKey);
+                    if ($detail !== null && str_contains(strtolower($detail), 'getrecordingauthparam')) {
+                        throw new RuntimeException('VitalPBX CDR API has a server-side software error: its handler calls the missing getRecordingAuthParam() method. Update VitalPBX from the administrator menu (User menu > Check for Updates), then retry. This is not an ERP API key or tenant error.');
+                    }
+
+                    $message = 'VitalPBX call history API returned HTTP '.$response->status().'. Check the VitalPBX API key and tenant, CDR API access, and VitalPBX CDR service logs.';
+                    if ($detail !== null) {
+                        $message .= ' Provider message: '.$detail;
+                    }
+
+                    throw new RuntimeException($message);
                 }
 
                 $payload = $response->json();
@@ -178,6 +190,32 @@ class VitalPbxCallHistory
             if ($nested !== null) {
                 return $nested;
             }
+        }
+
+        return null;
+    }
+
+    private function providerError(mixed $payload, string $apiKey): ?string
+    {
+        if (! is_array($payload)) {
+            return null;
+        }
+
+        foreach (['message', 'error', 'detail', 'description'] as $key) {
+            if (! isset($payload[$key]) || ! is_scalar($payload[$key])) {
+                continue;
+            }
+
+            $detail = trim(strip_tags((string) $payload[$key]));
+            if ($detail === '') {
+                continue;
+            }
+
+            if ($apiKey !== '') {
+                $detail = str_replace($apiKey, '[redacted]', $detail);
+            }
+
+            return mb_substr($detail, 0, 240);
         }
 
         return null;
