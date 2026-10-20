@@ -16,6 +16,7 @@ use App\Http\Controllers\HrController;
 use App\Http\Controllers\RecruitmentController;
 use App\Http\Controllers\PerformanceController;
 use App\Http\Controllers\AttendanceController;
+use App\Http\Controllers\ProjectsController;
 use App\Models\SalesPipelineStage;
 use App\Http\Controllers\CRM\LeadAssignmentRulesController;
 use App\Http\Controllers\CRM\LeadNotificationController;
@@ -92,6 +93,24 @@ Route::middleware('auth')->group(function () {
         Route::post('/holidays', [AttendanceController::class, 'holidayStore'])->name('holidays.store');
         Route::post('/timesheets', [AttendanceController::class, 'timesheetStore'])->name('timesheets.store');
         Route::put('/timesheets/{timesheet}', [AttendanceController::class, 'timesheetUpdate'])->whereNumber('timesheet')->name('timesheets.update');
+    });
+    Route::prefix('projects')->name('projects.')->group(function () {
+        Route::get('/', [ProjectsController::class, 'index'])->name('index');
+        Route::post('/', [ProjectsController::class, 'store'])->name('store');
+        Route::get('/{project}', [ProjectsController::class, 'show'])->whereNumber('project')->name('show');
+        Route::post('/{project}/members', [ProjectsController::class, 'memberStore'])->whereNumber('project')->name('members.store');
+        Route::post('/{project}/workstreams', [ProjectsController::class, 'workstreamStore'])->whereNumber('project')->name('workstreams.store');
+        Route::post('/{project}/tasks', [ProjectsController::class, 'taskStore'])->whereNumber('project')->name('tasks.store');
+        Route::put('/tasks/{task}', [ProjectsController::class, 'taskUpdate'])->whereNumber('task')->name('tasks.update');
+        Route::post('/tasks/{task}/dependencies', [ProjectsController::class, 'dependencyStore'])->whereNumber('task')->name('tasks.dependencies.store');
+        Route::post('/tasks/{task}/approve', [ProjectsController::class, 'taskApprove'])->whereNumber('task')->name('tasks.approve');
+        Route::post('/tasks/{task}/comments', [ProjectsController::class, 'commentStore'])->whereNumber('task')->name('tasks.comments.store');
+        Route::post('/tasks/{task}/time', [ProjectsController::class, 'timeStore'])->whereNumber('task')->name('tasks.time.store');
+        Route::post('/tasks/{task}/attachments', [ProjectsController::class, 'attachmentStore'])->whereNumber('task')->name('tasks.attachments.store');
+        Route::get('/attachments/{attachment}', [ProjectsController::class, 'attachmentDownload'])->whereNumber('attachment')->name('attachments.download');
+        Route::post('/{project}/milestones', [ProjectsController::class, 'milestoneStore'])->whereNumber('project')->name('milestones.store');
+        Route::post('/milestones/{milestone}/approve', [ProjectsController::class, 'milestoneApprove'])->whereNumber('milestone')->name('milestones.approve');
+        Route::post('/{project}/risks', [ProjectsController::class, 'riskStore'])->whereNumber('project')->name('risks.store');
     });
     Route::prefix('tickets')->name('tickets.')->group(function () {
         Route::get('/', [TicketController::class, 'index'])->name('index');

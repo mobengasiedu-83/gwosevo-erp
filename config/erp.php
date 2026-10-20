@@ -16,7 +16,7 @@ return [
         'recruitment' => ['name' => '12 · Recruitment & Assessments', 'available' => true],
         'performance' => ['name' => '13 · Performance Management & Appraisals', 'available' => true],
         'attendance' => ['name' => '14 · Attendance, Leave & Employee Self-Service', 'available' => true],
-        'projects' => ['name' => '15 · Projects, Tasks & Team Productivity', 'available' => false],
+        'projects' => ['name' => '15 · Projects, Tasks & Team Productivity', 'available' => true],
         'finance' => ['name' => '16 · Finance, Invoicing & Revenue Management', 'available' => false],
         'procurement' => ['name' => '17 · Procurement, Assets & Inventory', 'available' => false],
         'knowledge' => ['name' => '18 · Knowledge Bank & AI Search', 'available' => false],

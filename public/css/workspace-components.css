@@ -1,0 +1,105 @@
+/* Shared layout primitives for the legacy section views and newer module screens. */
+.workspace-content > .page-heading { margin: 0 0 24px; }
+.workspace-content .page-heading h1 { margin: 4px 0 7px; color: var(--gwo-ink); }
+.workspace-content .page-heading p { margin: 0; line-height: 1.65; }
+.workspace-content .eyebrow { margin: 0 0 4px; }
+
+.workspace-content .card {
+    min-width: 0;
+    margin: 0 0 20px;
+    padding: 22px;
+    background: #fff;
+    border: 1px solid var(--gwo-border);
+    border-radius: 13px;
+    box-shadow: 0 2px 5px #231f2005;
+}
+.workspace-content .card .card { margin: 12px 0; padding: 16px; background: #fbfcfb; box-shadow: none; }
+.workspace-content .card h2 { margin: 0 0 14px; font-size: 17px; line-height: 1.4; font-weight: 600; }
+.workspace-content .card h3 { margin: 0 0 12px; font-size: 14px; line-height: 1.4; font-weight: 600; }
+.workspace-content .card > :last-child { margin-bottom: 0; }
+.workspace-content .card hr { border: 0; border-top: 1px solid var(--gwo-border); margin: 18px 0; }
+
+.workspace-content .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+    margin: 0 0 20px;
+}
+.workspace-content .stats-grid .card { margin: 0; padding: 18px 20px; }
+.workspace-content .stats-grid .card > span { display: block; color: #847890; font-size: 12px; }
+.workspace-content .stats-grid .card > strong { display: block; margin-top: 4px; color: var(--gwo-ink); font-size: 25px; line-height: 1.25; font-weight: 600; }
+.workspace-content .applicant-funnel { margin-top: 20px; }
+.workspace-content .applicant-funnel h2 { margin-bottom: 16px; }
+.workspace-content .applicant-funnel-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 0; }
+.workspace-content .applicant-funnel-grid .applicant-funnel-card { min-height: 96px; border-left: 3px solid #9aa2ae; background: #fbfcfd; }
+.workspace-content .applicant-funnel-grid .stage-new { border-left-color: #548d42; }
+.workspace-content .applicant-funnel-grid .stage-screening { border-left-color: #5192bd; }
+.workspace-content .applicant-funnel-grid .stage-interview { border-left-color: #7864a3; }
+.workspace-content .applicant-funnel-grid .stage-assessment { border-left-color: #bd8d35; }
+.workspace-content .applicant-funnel-grid .stage-offer { border-left-color: #c5a51c; }
+.workspace-content .applicant-funnel-grid .stage-hired { border-left-color: #439b54; }
+.workspace-content .applicant-funnel-grid .stage-rejected { border-left-color: #c45e63; }
+.workspace-content .applicant-funnel-grid .stage-withdrawn { border-left-color: #92909a; }
+
+.workspace-content .content-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+    gap: 18px;
+    margin-bottom: 20px;
+}
+.workspace-content .content-grid > .card { margin: 0; height: 100%; }
+.workspace-content .form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: end;
+    gap: 14px 18px;
+    margin: 12px 0 16px;
+}
+.workspace-content .form-grid > label,
+.workspace-content .stack-form > label {
+    display: block;
+    min-width: 0;
+    color: #62596a;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.5;
+}
+.workspace-content .stack-form { display: grid; gap: 14px; margin: 12px 0 16px; }
+.workspace-content .form-grid input[type="checkbox"],
+.workspace-content .stack-form input[type="checkbox"] { width: 15px; height: 15px; margin: 0 6px 0 0; accent-color: var(--erp-brand); vertical-align: middle; }
+.workspace-content .form-grid button,
+.workspace-content .stack-form button { justify-self: start; }
+
+.workspace-content .table-wrap { width: 100%; max-width: 100%; overflow-x: auto; border: 1px solid #efedf1; border-radius: 9px; }
+.workspace-content .table-wrap table { width: 100%; border-collapse: separate; border-spacing: 0; text-align: left; font-size: 12px; line-height: 1.55; }
+.workspace-content .table-wrap th { padding: 11px 13px; background: #f3f6f9; color: #706778; font-size: 11px; font-weight: 600; white-space: nowrap; }
+.workspace-content .table-wrap td { padding: 12px 13px; border-top: 1px solid #ece9ef; color: #564f5e; vertical-align: top; }
+.workspace-content .table-wrap tbody tr:hover { background: #fbfcfa; }
+.workspace-content .table-wrap td[colspan] { padding: 22px 14px; color: #8c7b98; text-align: center; }
+.workspace-content .table-wrap a { color: #527e46; font-weight: 600; }
+.workspace-content .inline-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 10px 0; }
+.workspace-content .inline-actions :is(input, select, textarea) { width: auto; max-width: 100%; margin-top: 0; }
+.workspace-content .inline-actions input:not([type="checkbox"]):not([type="file"]) { flex: 1 1 140px; }
+.workspace-content .inline-actions select { flex: 0 1 180px; }
+.workspace-content .inline-actions .button { flex: 0 0 auto; }
+.workspace-content .card ul { padding-left: 20px; color: #635a69; }
+.workspace-content .card li { margin: 5px 0; }
+.workspace-content .muted { color: #867990; }
+
+@media (max-width: 1000px) {
+    .workspace-content .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .workspace-content .applicant-funnel-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .workspace-content .content-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 640px) {
+    .workspace-content .card { padding: 17px; border-radius: 11px; }
+    .workspace-content .stats-grid { gap: 10px; }
+    .workspace-content .applicant-funnel-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .workspace-content .stats-grid .card { padding: 14px; }
+    .workspace-content .stats-grid .card > strong { font-size: 21px; }
+    .workspace-content .form-grid { grid-template-columns: 1fr; gap: 12px; }
+    .workspace-content .inline-actions > * { flex: 1 1 100%; }
+    .workspace-content .inline-actions .button { flex-basis: auto; }
+    .workspace-content .table-wrap table { min-width: 620px; }
+}

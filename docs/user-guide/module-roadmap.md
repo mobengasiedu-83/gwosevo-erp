@@ -2,7 +2,7 @@
 
 **Edition:** 20 October 2026. [Return to the user guide](README.md).
 
-The feature tables below reproduce the supplied Module Feature Breakdown as a requirements reference. Modules 01–14 are installed within the boundaries explained in the user guide. Modules 15–22 are planned. No future-module procedures are fabricated.
+The feature tables below reproduce the supplied Module Feature Breakdown as a requirements reference. Modules 01–15 are installed within the boundaries explained in the user guide. Modules 16–22 are planned.
 
 ## Module 01 System Administration & Configuration
 
@@ -227,7 +227,7 @@ See [Module 05 setup and user guide](../module-five.md). The specifications requ
 | Conversions | Leads, opportunities and won revenue |
 | Affiliates | Referral attribution and approved commissions |
 
-**Before operational use:** approve the provider interface, event mapping, lawful recording policy and role assignments; configure the encrypted connection profile and signing secret; then verify events against the provider.
+**Before operational use:** configure marketing segmentation and consent procedures, channel permissions, campaign budgets, and the related communication provider integrations.
 
 ## Module 11 Human Resources & Employee Records
 
@@ -330,13 +330,13 @@ See [Module 05 setup and user guide](../module-five.md). The specifications requ
 
 ## Module 15 Projects, Tasks & Team Productivity
 
-**Status:** Planned — not installed. No operational screens or end-to-end user procedures are available yet.
+**Status:** Installed locally. See the [Module 15 operations guide](../module-fifteen.md).
 
 **Purpose:** Coordinate work and track delivery.
 
 **Priority:** Phase 4
 
-| Specified feature | Required functionality / planned scope |
+| Specified feature | Implemented functionality |
 | --- | --- |
 | Projects | Owner, client, budget and timeline |
 | Workstreams | Departmental delivery areas |
@@ -351,7 +351,7 @@ See [Module 05 setup and user guide](../module-five.md). The specifications requ
 | Risks | Risk and issue registers |
 | Reports | Overdue, workload and completion |
 
-**Before operational use:** approve the provider interface, event mapping, lawful recording policy and role assignments; configure the encrypted connection profile and signing secret; then verify events against the provider.
+**Before operational use:** configure project permissions, organization memberships, independent approval responsibilities, attachment retention and backup practices.
 
 ## Module 16 Finance, Invoicing & Revenue Management
 

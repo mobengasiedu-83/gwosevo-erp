@@ -3,7 +3,7 @@
 **Edition:** 20 October 2026 · **Audience:** staff, supervisors, reviewers and administrators
 **Application:** <https://localhost/gwosevo-erp/public/>
 
-This guide describes the application currently installed in this repository. Modules 01–14 are installed within the commissioning boundaries described here. Modules 15–22 remain planned. Their feature catalogue is included in the [module roadmap](module-roadmap.md).
+This guide describes the application currently installed in this repository. Modules 01–15 are installed within the commissioning boundaries described here. Modules 16–22 remain planned. Their feature catalogue is included in the [module roadmap](module-roadmap.md).
 
 The names “superadmin” and “Administrator” refer here to the existing Administrator account/role. This guide contains no account passwords, invitation tokens or integration secrets.
 
@@ -549,11 +549,21 @@ The current screens provide a starter KPI library, up to three self-appraisal go
 
 Create leave types, configure an employee's yearly entitlement/carryover/adjustment, add organization holidays, and create weekly shift schedules with grace periods. Active, linked employees can clock in and out once each day. The system records late arrival against an assigned shift and records a schedule exception when clocking in on an unscheduled weekday. HR can enter or correct attendance, including absence and exception statuses.
 
-Employees submit leave requests and timesheet entries. Leave day calculations count weekdays and exclude holidays entered for the organization; requests cannot overlap pending or approved leave, span calendar years, or exceed the available balance. Approval-required leave types wait for a manager/HR decision; types configured without approval are auto-approved. Staff may cancel pending leave and timesheet submissions. Manager/HR decisions are audited. The timesheet tracks activity and hours without project links because Module 15 is not installed.
+Employees submit leave requests and timesheet entries. Leave day calculations count weekdays and exclude holidays entered for the organization; requests cannot overlap pending or approved leave, span calendar years, or exceed the available balance. Approval-required leave types wait for a manager/HR decision; types configured without approval are auto-approved. Staff may cancel pending leave and timesheet submissions. Manager/HR decisions are audited. Project task time is tracked separately in Module 15.
 
 The module does not automatically generate absence records, accrue balances, restore employees' HR status after leave, schedule shifts on a rotating pattern, import a Ghana holiday feed, send reminders, or enforce payroll/overtime rules. Configure company entitlements, the holiday calendar, shift policy and retention rules with HR before production use. See the [Module 14 attendance guide](../module-fourteen.md).
 
-## Modules 15–22 — Planned capabilities
+## Module 15 — Projects, tasks and team productivity
+
+**Status:** Installed locally. Open Operations & Projects → **Projects & tasks**. Access is organization scoped. `projects.view` permits viewing assigned/member projects, `projects.manage` creates projects and workstreams, `projects.tasks.manage` creates work and dependencies, `projects.tasks.assign` permits assigning other users, `projects.approve` signs off deliverables/milestones, `projects.comments` enables collaboration, `projects.attachments` controls encrypted private files, `projects.time.manage` permits broader time entry, `projects.risks.manage` records issues/risks, and `projects.reports.view` provides organization-level summaries. Administrator receives all permissions; Operations receives core project/task/collaboration/time/report access. Review role grants before use.
+
+Create a project with an owner, client, budget and dates. Add team members and workstreams, then create top-level tasks or subtasks with an owner, priority, status, due date and estimate. Move work through the Kanban status controls. Dependencies identify prerequisite tasks and cycles are rejected. Deliverable tasks require approval before completion; a user with `projects.approve` signs off. Milestones can also be marked as requiring approval.
+
+Project members can comment and mention other project members. Task attachments are limited to approved document/image types and 10 MB; file contents are encrypted using `APP_KEY` and stored on the private local disk. Keep the key and private storage backups together. Task owners can log their own time, while `projects.time.manage` grants broader time entry; workload, completion and overdue summaries are available to authorized report viewers. Risks and issues have probability, impact, owner and mitigation fields.
+
+The module does not include client billing, automatic dependency-based scheduling, notifications for mentions, task email reminders, drag-and-drop Kanban, file antivirus scanning, or external project tools. Set approval, access, backup and retention procedures before production use. See the [Module 15 operations guide](../module-fifteen.md).
+
+## Modules 16–22 — Planned capabilities
 
 These modules do not yet have operational screens in this installation. The [complete module roadmap](module-roadmap.md) lists every specified module and feature, including the distinction between current foundations and future work.
 

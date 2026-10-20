@@ -16,6 +16,7 @@ $switchableOrganizations = auth()->user()->hasRole('Administrator') ? \App\Model
 <link rel="icon" type="image/webp" href="{{ asset('images/brand/favicon.webp') }}">
 @vite(['resources/css/app.css','resources/js/app.js'])
 <link rel="stylesheet" href="{{ asset('css/brand-fonts.css') }}"><link rel="stylesheet" href="{{ asset('css/administration.css') }}?v={{ filemtime(public_path('css/administration.css')) }}">
+<link rel="stylesheet" href="{{ asset('css/workspace-components.css') }}?v={{ filemtime(public_path('css/workspace-components.css')) }}">
 <style>:root{--erp-brand:{{ $erpSettings->get('brand_color') }}}</style>
 @livewireStyles
 </head>
@@ -65,7 +66,7 @@ $switchableOrganizations = auth()->user()->hasRole('Administrator') ? \App\Model
 @foreach($errors->all() as $error)<li>{{ $error }}</li>
 @endforeach</ul></div></div>
 @endif
-{{ $slot }}
+{!! $slot ?? $__env->yieldContent('content') !!}
 </main>
 <footer class="workspace-footer"><span>© {{ now()->year }} GWO SEVO Solutions</span><span><i></i> One connected workspace</span></footer>
 </div>

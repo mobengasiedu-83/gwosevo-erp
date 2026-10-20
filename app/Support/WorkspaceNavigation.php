@@ -37,6 +37,9 @@ class WorkspaceNavigation
             $groups['Human Resources'] ??= [];
             $groups['Human Resources'][] = ['label' => $user->can('attendance.view') ? 'Attendance & leave' : 'My attendance & leave', 'route' => 'attendance.index', 'match' => 'attendance.*', 'icon' => 'calendar'];
         }
+        if (app(Modules::class)->enabled('projects') && ($user->can('projects.view') || $user->can('projects.manage') || $user->can('projects.tasks.manage'))) {
+            $groups['Operations & Projects'] = [['label' => 'Projects & tasks', 'route' => 'projects.index', 'match' => 'projects.*', 'icon' => 'activity']];
+        }
         if (app(Modules::class)->enabled('contact_centre') && $user->can('calls.view')) {
             $groups['Customer Experience'] = [['label' => 'Contact centre', 'route' => 'contact-centre.index', 'match' => 'contact-centre.*', 'icon' => 'phone']];
         }
