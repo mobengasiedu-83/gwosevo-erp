@@ -3,6 +3,10 @@ import './bootstrap';
 // Progressive UI behavior; authorization and all mutations remain server-side.
 const ui = () => {
     const sidebar = document.getElementById('workspace-sidebar');
+    const sidebarNavigation = document.querySelector('.sidebar-navigation');
+    const navigationUser = sidebarNavigation?.dataset.navUser ?? 'anonymous';
+    const collapsedPreferenceKey = `gwo.sidebar.collapsed.${navigationUser}`;
+    const groupPreferenceKey = `gwo.sidebar.expanded-group.${navigationUser}`;
     const menuButton = document.querySelector('[data-sidebar-open]');
     const mobile = window.matchMedia('(max-width: 820px)');
     const collapseButton = document.querySelector('[data-sidebar-toggle]');
@@ -10,25 +14,39 @@ const ui = () => {
     const savePreference = (key, value) => { try { localStorage.setItem(key, value); } catch { /* Storage can be disabled. */ } };
     const setCollapsed = (collapsed) => {
         document.body.classList.toggle('sidebar-collapsed', collapsed);
-        if (collapsed) document.querySelectorAll('[data-nav-group]').forEach((group) => { group.open = true; });
         collapseButton?.setAttribute('aria-expanded', String(!collapsed));
         collapseButton?.setAttribute('aria-label', collapsed ? 'Expand sidebar' : 'Collapse sidebar');
     };
-    setCollapsed(readPreference('gwo.sidebar.collapsed') === 'true');
+    setCollapsed(readPreference(collapsedPreferenceKey) === 'true');
     collapseButton?.addEventListener('click', () => {
         const collapsed = !document.body.classList.contains('sidebar-collapsed');
         setCollapsed(collapsed);
-        savePreference('gwo.sidebar.collapsed', String(collapsed));
+        savePreference(collapsedPreferenceKey, String(collapsed));
     });
     const menuGroups = [...document.querySelectorAll('[data-nav-group]')];
+    const activeGroup = menuGroups.find((group) => group.querySelector('[aria-current="page"]'));
+    const savedGroup = menuGroups.find((group) => group.dataset.navGroup === readPreference(groupPreferenceKey));
+    let expandedGroup = activeGroup ?? savedGroup ?? menuGroups[0] ?? null;
+    let syncingMenuGroups = false;
     const syncMenuGroups = () => {
         const compact = !mobile.matches && document.body.classList.contains('sidebar-collapsed');
-        menuGroups.forEach((group) => { group.open = compact || !!group.querySelector('[aria-current="page"]'); });
+        syncingMenuGroups = true;
+        menuGroups.forEach((group) => { group.open = compact || group === expandedGroup; });
+        requestAnimationFrame(() => { syncingMenuGroups = false; });
     };
     menuGroups.forEach((group) => {
         group.addEventListener('toggle', () => {
-            if (!group.open || (!mobile.matches && document.body.classList.contains('sidebar-collapsed'))) return;
-            menuGroups.forEach((other) => { if (other !== group) other.open = false; });
+            if (syncingMenuGroups || (!mobile.matches && document.body.classList.contains('sidebar-collapsed'))) return;
+            if (group.open) {
+                expandedGroup = group;
+                savePreference(groupPreferenceKey, group.dataset.navGroup);
+                syncingMenuGroups = true;
+                menuGroups.forEach((other) => { if (other !== group) other.open = false; });
+                requestAnimationFrame(() => { syncingMenuGroups = false; });
+            } else if (expandedGroup === group) {
+                expandedGroup = null;
+                savePreference(groupPreferenceKey, '');
+            }
         });
     });
     collapseButton?.addEventListener('click', syncMenuGroups);

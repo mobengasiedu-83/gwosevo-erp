@@ -1,6 +1,7 @@
 <?php
 
 use App\Domain\ContactCentre\VitalPbxCallHistory;
+use App\Domain\Finance\FinanceService;
 use App\Domain\Identity\AccessReviews;
 use App\Jobs\HealthHeartbeat;
 use App\Console\Commands\SendLeadFollowUpAlerts;
@@ -141,3 +142,10 @@ Schedule::command(CaptureOpportunityForecast::class)->weeklyOn(1, '07:00')->with
 Schedule::command(SendOpportunityActionAlerts::class)->everyFifteenMinutes()->withoutOverlapping();
 Schedule::command(SendContractRenewalAlerts::class)->daily()->withoutOverlapping();
 Schedule::command('vitalpbx:sync-calls')->everyFiveMinutes()->withoutOverlapping();
+
+Artisan::command('finance:generate-recurring', function (FinanceService $finance) {
+    $count = $finance->generateRecurringInvoices();
+    $this->info("Generated {$count} recurring invoice(s) for independent approval.");
+})->purpose('Generate due recurring finance invoices');
+
+Schedule::command('finance:generate-recurring')->daily()->withoutOverlapping();

@@ -3,11 +3,12 @@
 **Edition:** 20 October 2026 · **Audience:** staff, supervisors, reviewers and administrators
 **Application:** <https://localhost/gwosevo-erp/public/>
 
-This guide describes the application currently installed in this repository. Modules 01–15 are installed within the commissioning boundaries described here. Modules 16–22 remain planned. Their feature catalogue is included in the [module roadmap](module-roadmap.md).
+This guide describes the application currently installed in this repository. Modules 01–18 are installed within the commissioning boundaries described here. Modules 19–22 remain planned. Their feature catalogue is included in the [module roadmap](module-roadmap.md). See the [Module 18 knowledge bank guide](../module-eighteen.md) for setup and integration boundaries.
 
 The names “superadmin” and “Administrator” refer here to the existing Administrator account/role. This guide contains no account passwords, invitation tokens or integration secrets.
 
 ## Contents
+
 
 1. [Getting started and navigation](#getting-started-and-navigation)
 2. [Roles and access](#roles-and-access)
@@ -22,11 +23,15 @@ The names “superadmin” and “Administrator” refer here to the existing Ad
 11. [Module 09 — SMS and communication management](#module-09--sms-and-communication-management)
 12. [Module 10 — Marketing campaigns and lead generation](#module-10--marketing-campaigns-and-lead-generation)
 13. [Module 11 — Human resources and employee records](#module-11--human-resources-and-employee-records)
-14. [Daily and periodic routines](#daily-and-periodic-routines)
-15. [Troubleshooting](#troubleshooting)
-16. [Administrator setup checklist](#administrator-setup-checklist)
-17. [Glossary](#glossary)
-18. [Technical and commissioning notes](#technical-and-commissioning-notes)
+14. [Module 16 — Finance and revenue](#module-16--finance-and-revenue)
+15. [Module 17 — Procurement, assets and inventory](#module-17--procurement-assets-and-inventory)
+16. [Module 18 — Knowledge bank and AI search](#module-18--knowledge-bank-and-ai-search)
+17. [Daily and periodic routines](#daily-and-periodic-routines)
+18. [Troubleshooting](#troubleshooting)
+19. [Administrator setup checklist](#administrator-setup-checklist)
+20. [Glossary](#glossary)
+21. [Technical and commissioning notes](#technical-and-commissioning-notes)
+
 
 ## Getting started and navigation
 
@@ -135,7 +140,7 @@ Example: create country code `GH`, label `Ghana`; then create a region linked to
 3. Make an approved change and save.
 4. Check the reference generated for the next new record.
 
-Lead/customer allocation is transactional. Existing references stay unchanged, and next numbers cannot be moved backward into used values. Ticket, quotation and invoice sequence definitions are reserved for their future modules; they do not provide those record-creation screens.
+Lead/customer allocation is transactional. Existing references stay unchanged, and next numbers cannot be moved backward into used values. Ticket and quotation sequences are reserved for those modules. Module 16 uses the invoice sequence for issued finance records.
 
 ### Import reference data
 
@@ -563,21 +568,50 @@ Project members can comment and mention other project members. Task attachments 
 
 The module does not include client billing, automatic dependency-based scheduling, notifications for mentions, task email reminders, drag-and-drop Kanban, file antivirus scanning, or external project tools. Set approval, access, backup and retention procedures before production use. See the [Module 15 operations guide](../module-fifteen.md).
 
-## Modules 16–22 — Planned capabilities
+## Module 16 — Finance and revenue
+
+**Status:** Installed locally. Open Finance → **Finance & billing**. All data and number sequences are scoped to the active organization. Administrator/superadmin has all module access; the Finance role has invoice, payment, credit, expense, budget, tax, approval-limit and report permissions. Users can submit their own expense claims without broad finance access. Check organization membership and assigned roles before use.
+
+Create an invoice draft with a customer, dates, currency, service/department and up to three line items in the page form. Each line can use an active organization tax code. The current UI computes a flat percentage tax, either included in or added to price. Add more than three lines only by extending the form; the endpoint currently accepts up to 25. Submit the draft for independent approval. The requester cannot approve their own invoice. Configured limits apply by approver role and currency; when limits exist, an approver needs a matching role limit. Issue approved invoices to start receivables tracking. The module does not email invoices or create invoice PDFs.
+
+Record receipts against a single issued invoice. The amount cannot exceed its open balance and updates the invoice to part paid or paid. After checking a receipt against your bank/payment statement, mark it reconciled and store the statement reference. This does not import a bank feed or match transactions automatically. Create credit notes against the unpaid balance of an issued invoice; an independent approver may approve and issue them. Reversals of already-paid balances/refunds are not supported.
+
+Employees can submit their own expense claims. Finance users can review claims, approve or reject someone else's claim, and mark an approved claim reimbursed. Maintain active budgets with dates, currency and optional service/department. The displayed variance compares the budget with issued invoice revenue in the date window; expense actuals are not included. Revenue reporting groups issued invoice totals by client, service and department. Authorized Finance users can export invoices to CSV.
+
+Recurring schedules can be weekly, monthly, quarterly or yearly. The scheduled daily command creates due invoices in the approval queue, and advances the next date. Configure Laravel's scheduler on the host and use `php artisan finance:generate-recurring` to run a manual check. A schedule whose creator has been deleted is deactivated.
+
+**Boundaries:** this module is an operational finance register, not a general ledger. It does not perform bank-feed reconciliation, double-entry accounting, foreign-exchange conversion, tax filing, invoice email/PDF generation, refunds, or external accounting synchronization. Review tax treatment, invoice numbering, access, independent approval and accounting export needs with Finance before production use. See the [Module 16 finance guide](../module-sixteen.md).
+
+## Module 17 — Procurement, assets and inventory
+
+**Status:** Installed locally. Open Operations &amp; Projects → **Procurement, assets &amp; inventory**. Records are scoped to the active organization. The Administrator role has all module permissions; the Procurement role can submit and review purchasing, receive goods, manage stock and maintain assets. Assign the minimum role permissions needed for each user.
+
+Register suppliers and retain due-diligence notes. Staff with `procurement.requests.create` submit purchase requests; a different user with `procurement.requests.approve` approves or rejects them. Only approved requests can be converted into purchase orders. A request creator cannot approve their own request. Purchase orders and receipts support multiple lines, partial deliveries and discrepancy notes.
+
+Create stock items and locations before receiving stock purchases. A goods receipt adds the accepted quantity to the chosen location. Transfer movements subtract from the source and add to the destination; adjustments require choosing one location and can add or remove stock. Negative stock is rejected. The overview highlights balances at or below their item's reorder level.
+
+Register assets with acquisition details, location and employee custody. Update assignment/status as custody changes, record maintenance work and mark it complete. Disposal is a separate approval: the requester cannot approve their own disposal, and approval marks the asset disposed and clears its assignee.
+
+The spend summary groups purchase orders by currency. **Boundaries:** this is an operational purchasing and asset register, not an accounting or depreciation ledger. It does not compare supplier quotations, enforce budgets, create Finance invoices automatically, provide a supplier portal, scan barcodes, run stocktakes or send supplier communications. Review purchasing limits, independent approval, stock procedures and custody records before production use. See the [Module 17 operations guide](../module-seventeen.md).
+
+## Module 18 — Knowledge bank and AI search
+
+**Status:** Installed locally. Open **Knowledge & Intelligence → Knowledge Bank & AI Search**. The module stores organization-scoped knowledge spaces, reviewed articles and private documents. Search returns published articles from spaces you can access. See the [Module 18 guide](../module-eighteen.md) for permission setup, AI and SharePoint configuration, and operational limits.
+
+Create a knowledge space, write an article, and submit it for review. A different reviewer must approve it and a separate publisher must publish it. Upload PDF, Word or text documents to an article; the app stores files privately and indexes extracted text when server tools support it. Optional AI answers and Microsoft 365 SharePoint sync are disabled until configured. Synced content remains unpublished until it passes the local review workflow.
+
+## Modules 19–22 — Planned capabilities
 
 These modules do not yet have operational screens in this installation. The [complete module roadmap](module-roadmap.md) lists every specified module and feature, including the distinction between current foundations and future work.
 
 | Module | Planned area |
-| 15 | Projects, tasks and team productivity |
-| 16 | Finance, invoicing and revenue management |
-| 17 | Procurement, assets and inventory |
-| 18 | Knowledge bank and AI search |
+| --- | --- |
 | 19 | Reports, dashboards and business intelligence |
 | 20 | Notifications, approvals and automation |
 | 21 | Integration and API management |
 | 22 | Security, audit, backup and monitoring |
 
-Detailed operational procedures for these modules must be written against their implemented screens and verified behavior when installed. The roadmap is not an instruction to activate or implement them now.
+Detailed operational procedures for these modules must be written against their implemented screens and verified behavior when installed.
 
 ## Daily and periodic routines
 

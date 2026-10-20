@@ -1,12 +1,12 @@
 # GWO SEVO ERP
 
-Laravel 12, Blade and Livewire ERP for GWO SEVO Solutions. Modules 01–15 are installed locally: system administration, identity and access, organization structure, CRM lead management, sales pipeline, quotations/contracts/client onboarding, contact centre with VitalPBX integration, customer support ticketing, TXTConnect SMS, marketing campaigns, human resources, recruitment/assessments, performance management, attendance/leave/self-service, and project/task productivity.
+Laravel 12, Blade and Livewire ERP for GWO SEVO Solutions. Modules 01–18 are installed locally: system administration, identity and access, organization structure, CRM lead management, sales pipeline, quotations/contracts/client onboarding, contact centre with VitalPBX integration, customer support ticketing, TXTConnect SMS, marketing campaigns, human resources, recruitment/assessments, performance management, attendance/leave/self-service, project/task productivity, finance/revenue management, procurement/assets/inventory, and the knowledge bank with AI search.
 
 The UI follows the GWO SEVO website's green/red/yellow/charcoal brand, using local logos, imagery, Inter and Poppins. It includes responsive workspace navigation, keyboard quick navigation (Ctrl/Cmd K), branded authentication pages and accessible confirmation dialogs. It honors reduced-motion preferences.
 
 ## User documentation
 
-Read the [complete user guide](docs/user-guide/README.md) for sign-in, navigation, Modules 01–15, administration, troubleshooting and setup. The [22-module catalogue and roadmap](docs/user-guide/module-roadmap.md) identifies installed, partial and planned capabilities. See also the [Module 09 SMS setup guide](docs/module-nine.md), [Module 10 marketing guide](docs/module-ten.md), [Module 11 HR guide](docs/module-eleven.md), [Module 12 recruitment guide](docs/module-twelve.md), [Module 13 performance guide](docs/module-thirteen.md), [Module 14 attendance guide](docs/module-fourteen.md), and [Module 15 projects guide](docs/module-fifteen.md).
+Read the [complete user guide](docs/user-guide/README.md) for sign-in, navigation, Modules 01–18, administration, troubleshooting and setup. The [22-module catalogue and roadmap](docs/user-guide/module-roadmap.md) identifies installed, partial and planned capabilities. See also the [Module 09 SMS setup guide](docs/module-nine.md), [Module 10 marketing guide](docs/module-ten.md), [Module 11 HR guide](docs/module-eleven.md), [Module 12 recruitment guide](docs/module-twelve.md), [Module 13 performance guide](docs/module-thirteen.md), [Module 14 attendance guide](docs/module-fourteen.md), [Module 15 projects guide](docs/module-fifteen.md), [Module 16 finance guide](docs/module-sixteen.md), [Module 17 procurement guide](docs/module-seventeen.md), [Module 18 knowledge bank guide](docs/module-eighteen.md).
 
 ## Current local installation
 

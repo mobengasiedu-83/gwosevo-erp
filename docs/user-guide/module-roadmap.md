@@ -2,7 +2,7 @@
 
 **Edition:** 20 October 2026. [Return to the user guide](README.md).
 
-The feature tables below reproduce the supplied Module Feature Breakdown as a requirements reference. Modules 01–15 are installed within the boundaries explained in the user guide. Modules 16–22 are planned.
+The feature tables below reproduce the supplied Module Feature Breakdown as a requirements reference. Modules 01–18 are installed within the boundaries explained in the user guide. Modules 19–22 are planned.
 
 ## Module 01 System Administration & Configuration
 
@@ -355,7 +355,7 @@ See [Module 05 setup and user guide](../module-five.md). The specifications requ
 
 ## Module 16 Finance, Invoicing & Revenue Management
 
-**Status:** Planned — not installed. No operational screens or end-to-end user procedures are available yet.
+**Status:** Installed locally. See the [Module 16 finance guide](../module-sixteen.md).
 
 **Purpose:** Operational billing, revenue and budget controls.
 
@@ -363,30 +363,30 @@ See [Module 05 setup and user guide](../module-five.md). The specifications requ
 
 | Specified feature | Required functionality / planned scope |
 | --- | --- |
-| Invoices | Draft, approve, issue, pay and overdue |
-| Recurring Billing | Schedules and service subscriptions |
-| Credit Notes | Controlled reversals |
-| Payments | Allocation and reconciliation |
-| Expenses | Claims and approval |
-| Revenue | Client, service and department analysis |
-| Budgets | Allocation and variance |
-| Approval Limits | Financial authorization |
-| Taxes | Configurable codes and rules |
-| Receivables | Outstanding balances and ageing |
-| Exports | Accounting and spreadsheet output |
-| Dashboard | Collections, receivables and budget use |
+| Invoices | Draft, independent approval, issue, payment allocation and overdue status |
+| Recurring Billing | Weekly, monthly, quarterly and annual schedules generate drafts for approval |
+| Credit Notes | Controlled approval and issuance, limited to open invoice balances |
+| Payments | Receipts allocated to one invoice, with manual reconciliation reference and balance status updates |
+| Expenses | Employee claims, independent approval and reimbursement status |
+| Revenue | Issued invoice totals by client, service and department |
+| Budgets | Date-bounded allocations and invoiced revenue variance |
+| Approval Limits | Role and currency-specific invoice approval ceilings |
+| Taxes | Organization-specific flat percentage codes, inclusive or added-on |
+| Receivables | Open balances grouped by age |
+| Exports | Organization-scoped invoice CSV |
+| Dashboard | Collections, receivables ageing, overdue invoices and pending expenses |
 
-**Before operational use:** approve the provider interface, event mapping, lawful recording policy and role assignments; configure the encrypted connection profile and signing secret; then verify events against the provider.
+**Boundaries:** this module is an operational finance register, not a general ledger. It does not perform bank-feed reconciliation, double-entry accounting, foreign-exchange conversion, tax filing, customer invoice email/PDF generation, refunds, or external accounting synchronization. Budget actuals currently use issued invoice revenue, not expense ledger entries. Configure the host scheduler for daily recurring invoice generation. Verify tax treatment, numbering, approvals, access and accounting export needs with Finance before production use.
 
 ## Module 17 Procurement, Assets & Inventory
 
-**Status:** Planned — not installed. No operational screens or end-to-end user procedures are available yet.
+**Status:** Installed locally. See the user guide and [Module 17 operations guide](../module-seventeen.md) for operating instructions and boundaries.
 
 **Purpose:** Track purchasing and company assets.
 
 **Priority:** Phase 4
 
-| Specified feature | Required functionality / planned scope |
+| Specified feature | Installed functionality |
 | --- | --- |
 | Suppliers | Vendor profiles and due diligence |
 | Purchase Requests | Department requests and approval |
@@ -400,11 +400,11 @@ See [Module 05 setup and user guide](../module-five.md). The specifications requ
 | Disposal | Authorization and retirement |
 | Reports | Spend, assets and stock |
 
-**Before operational use:** approve the provider interface, event mapping, lawful recording policy and role assignments; configure the encrypted connection profile and signing secret; then verify events against the provider.
+**Boundaries:** The module records purchasing, receipts and internal stock movements. Purchase requests have one independent approval; requesters cannot approve their own request. Purchase orders support multiple item lines. Receipt discrepancies are recorded as notes. There is no supplier portal, quotation comparison, budget enforcement, automatic invoice posting to Finance, barcode scanning, depreciation ledger, preventive maintenance scheduler, or physical stocktake workflow. Review purchasing limits, independent approval, inventory practices and asset custody before production use.
 
 ## Module 18 Knowledge Bank & AI Search
 
-**Status:** Planned — not installed. No operational screens or end-to-end user procedures are available yet.
+**Status:** Installed locally. See the [Module 18 operations guide](../module-eighteen.md) for setup and operational boundaries.
 
 **Purpose:** Controlled organizational knowledge and retrieval.
 
@@ -427,7 +427,7 @@ See [Module 05 setup and user guide](../module-five.md). The specifications requ
 | Feedback | Relevance and quality ratings |
 | Analytics | Search usage and unanswered queries |
 
-**Before operational use:** approve the provider interface, event mapping, lawful recording policy and role assignments; configure the encrypted connection profile and signing secret; then verify events against the provider.
+**Boundaries:** AI and Qdrant are optional and off by default. Microsoft 365 sync is app-only SharePoint folder import, one level and up to 1,000 items; synced items require local review and publication. It does not recursively traverse folders or sync Teams chats/OneDrive. Review provider retention, document retention and malware scanning before production use.
 
 ## Module 19 Reports, Dashboards & Business Intelligence
 

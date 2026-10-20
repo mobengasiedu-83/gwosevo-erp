@@ -3,7 +3,7 @@ $navigation = app(\App\Support\WorkspaceNavigation::class)->groups(auth()->user(
 $currentLabel = 'Workspace';
 foreach ($navigation as $links) {
     foreach ($links as $link) {
-        if (request()->routeIs($link['match'])) { $currentLabel = $link['label']; }
+        if (request()->routeIs($link['match']) && (empty($link['parameters']) || request()->route('group') === ($link['parameters']['group'] ?? null))) { $currentLabel = $link['label']; }
     }
 }
 $switchableOrganizations = auth()->user()->hasRole('Administrator') ? \App\Models\Organization::where('is_active',true)->get() : auth()->user()->organizations()->where('organizations.is_active',true)->get();
@@ -26,12 +26,12 @@ $switchableOrganizations = auth()->user()->hasRole('Administrator') ? \App\Model
 <aside class="workspace-sidebar" id="workspace-sidebar" aria-label="Workspace navigation">
 <div class="sidebar-brand"><x-ui.brand :light="true" /><button class="icon-button sidebar-close" data-sidebar-close aria-label="Close navigation"><x-ui.icon name="close" /></button></div>
 <div class="workspace-chip"><span class="workspace-chip-mark">G</span><div><strong>{{ auth()->user()->activeOrganization?->name ?: $erpSettings->get('company_name') }}</strong><small>Staff workspace</small></div><span class="connection-dot" title="Signed in"></span></div>
-<nav class="sidebar-navigation">
+<nav class="sidebar-navigation" data-nav-user="{{ auth()->id() }}">
 @foreach($navigation as $group => $links)
-<details class="nav-group" @if(collect($links)->contains(fn($link) => request()->routeIs($link['match']))) open @endif data-nav-group="{{ $group }}"><summary class="nav-group-label">{{ $group }}<x-ui.icon name="chevron" /></summary><div class="nav-group-links">
+<details class="nav-group" @if(collect($links)->contains(fn($link) => request()->routeIs($link['match']) && (empty($link['parameters']) || request()->route('group') === ($link['parameters']['group'] ?? null)))) open @endif data-nav-group="{{ $group }}"><summary class="nav-group-label">{{ $group }}<x-ui.icon name="chevron" /></summary><div class="nav-group-links">
 @foreach($links as $link)
-<a class="sidebar-link {{ request()->routeIs($link['match']) ? 'is-active' : '' }}" href="{{ route($link['route']) }}" 
-@if(request()->routeIs($link['match'])) aria-current="page" 
+<a class="sidebar-link {{ request()->routeIs($link['match']) && (empty($link['parameters']) || request()->route('group') === ($link['parameters']['group'] ?? null)) ? 'is-active' : '' }} {{ !empty($link['child']) ? 'is-submenu-link' : '' }}" href="{{ route($link['route'], $link['parameters'] ?? []) }}"
+@if(request()->routeIs($link['match']) && (empty($link['parameters']) || request()->route('group') === ($link['parameters']['group'] ?? null))) aria-current="page"
 @endif title="{{ $link['label'] }}" data-navigation-label="{{ $link['label'] }}"><x-ui.icon :name="$link['icon']" /><span>{{ $link['label'] }}</span>
 @if(request()->routeIs($link['match']))<span class="nav-active-dot"></span>
 @endif</a>
@@ -72,7 +72,7 @@ $switchableOrganizations = auth()->user()->hasRole('Administrator') ? \App\Model
 </div>
 <dialog class="command-dialog" id="workspace-command"><div class="command-input"><x-ui.icon name="search" /><input type="search" data-command-search aria-label="Search workspace pages" placeholder="Where would you like to go?" autocomplete="off"><button class="icon-button" data-command-close aria-label="Close quick navigation"><x-ui.icon name="close" /></button></div><div class="command-results">
 @foreach($navigation as $group => $links)
-@foreach($links as $link)<a href="{{ route($link['route']) }}" data-command-item><x-ui.icon :name="$link['icon']" /><span>{{ $link['label'] }}<small>{{ $group }}</small></span><x-ui.icon name="arrow" /></a>
+@foreach($links as $link)<a href="{{ route($link['route'], $link['parameters'] ?? []) }}" data-command-item><x-ui.icon :name="$link['icon']" /><span>{{ $link['label'] }}<small>{{ $group }}</small></span><x-ui.icon name="arrow" /></a>
 @endforeach 
 @endforeach<p class="command-empty" hidden>No matching pages. Try a different name.</p></div><div class="command-footer">Quick navigation <span>Esc to close</span></div></dialog>
 <dialog class="confirm-dialog" id="workspace-confirm" aria-labelledby="confirm-title"><span class="confirm-symbol"><x-ui.icon name="shield" /></span><h2 id="confirm-title">Confirm this change</h2><p data-confirm-message></p><div class="row-actions"><button class="button secondary" data-confirm-cancel>Cancel</button><button class="button" data-confirm-accept>Confirm change</button></div></dialog>
