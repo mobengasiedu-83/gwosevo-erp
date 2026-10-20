@@ -28,6 +28,13 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    'txtconnect' => [
+        'base_url' => env('TXTCONNECT_BASE_URL', 'https://api.txtconnect.net/dev/api'),
+        'key' => env('TXTCONNECT_API_KEY'),
+        'sender' => env('TXTCONNECT_SENDER'),
+        'timeout' => (int) env('TXTCONNECT_TIMEOUT', 15),
+    ],
+
     'slack' => [
         'notifications' => [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),

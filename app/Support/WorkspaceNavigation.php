@@ -27,6 +27,9 @@ class WorkspaceNavigation
         if (app(Modules::class)->enabled('support') && $user->can('tickets.view')) {
             $groups['Operations'][] = ['label' => 'Support tickets', 'route' => 'tickets.index', 'match' => 'tickets.*', 'icon' => 'file'];
         }
+        if (app(Modules::class)->enabled('sms') && $user->can('sms.view')) {
+            $groups['Operations'][] = ['label' => 'SMS centre', 'route' => 'sms.index', 'match' => 'sms.*', 'icon' => 'message'];
+        }
         $groups['Workspace'][] = ['label' => 'Organization structure', 'route' => 'structure.index', 'match' => 'structure.*', 'icon' => 'users'];
         $groups['Governance'] = [
             ['label' => 'Access reviews', 'route' => 'identity.reviews.index', 'match' => 'identity.reviews.*', 'icon' => 'file'],

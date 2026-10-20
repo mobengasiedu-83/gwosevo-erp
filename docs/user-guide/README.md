@@ -3,7 +3,7 @@
 **Edition:** 20 October 2026 · **Audience:** staff, supervisors, reviewers and administrators
 **Application:** <https://localhost/gwosevo-erp/public/>
 
-This guide describes the application currently installed in this repository. Modules 01–08 are installed within the commissioning boundaries described here. Modules 09–22 remain planned and do not have operational user screens yet. Their feature catalogue is included in the [module roadmap](module-roadmap.md).
+This guide describes the application currently installed in this repository. Modules 01–09 are installed within the commissioning boundaries described here. Modules 10–22 remain planned and do not have operational user screens yet. Their feature catalogue is included in the [module roadmap](module-roadmap.md).
 
 The names “superadmin” and “Administrator” refer here to the existing Administrator account/role. This guide contains no account passwords, invitation tokens or integration secrets.
 
@@ -19,7 +19,8 @@ The names “superadmin” and “Administrator” refer here to the existing Ad
 8. [Module 06 — Quotations, contracts and client onboarding](#module-06--quotations-contracts-and-client-onboarding)
 9. [Module 07 — Contact centre and VitalPBX](#module-07--contact-centre-and-vitalpbx)
 10. [Module 08 — Customer support and ticketing](#module-08--customer-support-and-ticketing)
-11. [Modules 09–22 — Planned capabilities](#modules-0922--planned-capabilities)
+11. [Module 09 — SMS and communication management](#module-09--sms-and-communication-management)
+12. [Modules 10–22 — Planned capabilities](#modules-1022--planned-capabilities)
 12. [Daily and periodic routines](#daily-and-periodic-routines)
 13. [Troubleshooting](#troubleshooting)
 14. [Administrator setup checklist](#administrator-setup-checklist)
@@ -472,12 +473,32 @@ Attachments are limited to five per message, 10 MB each, with PDF, common image,
 
 Laravel email attempts and successful sends are recorded in `storage/logs/email.log`; failed mail notifications are marked as failures. Entries include recipient addresses, subject and message ID, but never message bodies or attachments. Follow the file with `tail -f storage/logs/email.log`. Ensure the production PHP user can write to `storage/logs`.
 
-## Modules 09–22 — Planned capabilities
+## Module 09 — SMS and communication management
+
+**Status:** Installed locally. Open Operations → **SMS centre** after the role has `sms.view`; the Administrator role receives read-only access. Permissions are separate so organizations can grant sending, campaign management, consent administration and template management only to the staff responsible. The seeder defines all permission names but does not grant outbound sending, campaign, consent or template management to any role. Assign only the required `sms.*` permissions in Administration → Roles & Permissions.
+
+Configure the local `.env` using the TXTConnect API key and an approved sender ID:
+
+```dotenv
+TXTCONNECT_BASE_URL=https://api.txtconnect.net/dev/api
+TXTCONNECT_API_KEY=your_api_key
+TXTCONNECT_SENDER=your_approved_sender
+TXTCONNECT_TIMEOUT=15
+```
+
+Then clear cached config with `php artisan config:clear`. The integration sends individual HTTPS POST requests to TXTConnect's documented `/sms/send` API using a Bearer token and `to`, `from`, `unicode` and `sms` fields. Credentials remain server-side. [TXTConnect API documentation](https://txtconnect.net/ApiDocumentation)
+
+Before sending, record each phone number's explicit opt-in and the evidence source in the **Consent register**. Opt-outs suppress subsequent sends. Transactional sends and campaigns are rejected unless every target is opted in for the active organization. Add approved templates, then queue a single message or create a campaign. Campaigns support up to 5,000 explicitly entered numbers and optional future scheduling. They do not auto-import or infer consent from CRM records.
+
+Start a queue worker that listens on the `sms` queue, for example `php artisan queue:work --queue=sms,default`. For scheduled campaigns, also keep Laravel's scheduler running once per minute (`php artisan schedule:run`). Review the message history for queued, submitted and failed records; retry a failed send manually, up to three attempts. Since the TXTConnect documented send API does not document an idempotency key, the ERP does not blindly auto-retry ambiguous network failures. “Submitted” means the provider accepted the request; the current ERP does not yet ingest or query delivery receipts, so it does not claim that the handset received the message.
+
+Each message history entry can link to an organization contact or support ticket. SMS bodies and recipient phone numbers are personal data; assign `sms.view` and reporting access accordingly, and follow the organization's retention and consent policy. No SMS is sent as part of the local migration or permission seeding.
+
+## Modules 10–22 — Planned capabilities
 
 These modules do not yet have operational screens in this installation. The [complete module roadmap](module-roadmap.md) lists every specified module and feature, including the distinction between current foundations and future work.
 
 | Module | Planned area |
-| 09 | SMS and communication management |
 | 10 | Marketing, campaigns and lead generation |
 | 11 | Human resources and employee records |
 | 12 | Recruitment and assessments |

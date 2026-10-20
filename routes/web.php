@@ -10,6 +10,7 @@ use App\Http\Controllers\Sales\SalesNotificationController;
 use App\Http\Controllers\Commercial\CommercialController;
 use App\Http\Controllers\ContactCentreController;
 use App\Http\Controllers\Support\TicketController;
+use App\Http\Controllers\SmsController;
 use App\Models\SalesPipelineStage;
 use App\Http\Controllers\CRM\LeadAssignmentRulesController;
 use App\Http\Controllers\CRM\LeadNotificationController;
@@ -58,6 +59,14 @@ Route::middleware('auth')->group(function () {
         Route::post('/qa/forms', [ContactCentreController::class, 'formStore'])->name('qa.forms.store');
         Route::post('/calls/{call}/evaluations', [ContactCentreController::class, 'evaluate'])->whereNumber('call')->name('calls.evaluate');
         Route::get('/screen-pop', [ContactCentreController::class, 'screenPop'])->name('screen-pop');
+    });
+    Route::prefix('sms')->name('sms.')->group(function () {
+        Route::get('/', [SmsController::class, 'index'])->name('index');
+        Route::post('/templates', [SmsController::class, 'template'])->name('templates.store');
+        Route::post('/consents', [SmsController::class, 'consent'])->name('consents.store');
+        Route::post('/send', [SmsController::class, 'send'])->middleware('throttle:20,1')->name('send');
+        Route::post('/campaigns', [SmsController::class, 'campaign'])->middleware('throttle:5,1')->name('campaigns.store');
+        Route::post('/messages/{message}/retry', [SmsController::class, 'retry'])->whereNumber('message')->middleware('throttle:5,1')->name('messages.retry');
     });
     Route::get('/leads/import', [LeadController::class, 'importPage'])->name('leads.import');
     Route::post('/leads/import/preview', [LeadController::class, 'importPreview'])->name('leads.import.preview');

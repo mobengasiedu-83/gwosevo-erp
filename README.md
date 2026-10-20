@@ -6,7 +6,7 @@ The UI follows the GWO SEVO website's green/red/yellow/charcoal brand, using loc
 
 ## User documentation
 
-Read the [complete user guide](docs/user-guide/README.md) for sign-in, navigation, Modules 01–08, administration, troubleshooting and setup. The [22-module catalogue and roadmap](docs/user-guide/module-roadmap.md) identifies installed, partial and planned capabilities.
+Read the [complete user guide](docs/user-guide/README.md) for sign-in, navigation, Modules 01–09, administration, troubleshooting and setup. The [22-module catalogue and roadmap](docs/user-guide/module-roadmap.md) identifies installed, partial and planned capabilities. See also the [Module 09 SMS setup guide](docs/module-nine.md).
 
 ## Current local installation
 

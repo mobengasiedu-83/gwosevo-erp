@@ -12,7 +12,8 @@ class IdentitySeeder extends Seeder
     public function run(): void
     {
         $ticketPermissions = ['tickets.view', 'tickets.create', 'tickets.update', 'tickets.assign', 'tickets.reply', 'tickets.internal', 'tickets.manage', 'tickets.reports', 'tickets.portal'];
-        $permissions = ['leads.view', 'leads.create', 'leads.update', 'leads.archive', 'leads.export', 'leads.approve', 'leads.assign', 'leads.qualify', 'leads.convert', 'leads.disqualify', 'leads.import', 'leads.reports.view', 'leads.rules.manage', 'leads.duplicate.review', 'opportunities.view', 'opportunities.create', 'opportunities.update', 'opportunities.assign', 'opportunities.approve', 'opportunities.catalog.manage', 'opportunities.targets.manage', 'opportunities.reports.view', 'quotes.view', 'quotes.create', 'quotes.update', 'quotes.approve', 'contracts.view', 'contracts.create', 'contracts.update', 'contracts.templates.manage', 'contracts.onboarding.manage', 'contracts.handover', 'contracts.portal.manage', 'calls.view', 'calls.disposition', 'calls.configure', 'calls.dial', 'calls.recordings.view', 'calls.supervise', 'calls.qa.manage', ...$ticketPermissions];
+        $smsPermissions = ['sms.view', 'sms.send', 'sms.manage', 'sms.consent.manage', 'sms.campaigns.manage'];
+        $permissions = ['leads.view', 'leads.create', 'leads.update', 'leads.archive', 'leads.export', 'leads.approve', 'leads.assign', 'leads.qualify', 'leads.convert', 'leads.disqualify', 'leads.import', 'leads.reports.view', 'leads.rules.manage', 'leads.duplicate.review', 'opportunities.view', 'opportunities.create', 'opportunities.update', 'opportunities.assign', 'opportunities.approve', 'opportunities.catalog.manage', 'opportunities.targets.manage', 'opportunities.reports.view', 'quotes.view', 'quotes.create', 'quotes.update', 'quotes.approve', 'contracts.view', 'contracts.create', 'contracts.update', 'contracts.templates.manage', 'contracts.onboarding.manage', 'contracts.handover', 'contracts.portal.manage', 'calls.view', 'calls.disposition', 'calls.configure', 'calls.dial', 'calls.recordings.view', 'calls.supervise', 'calls.qa.manage', ...$ticketPermissions, ...$smsPermissions];
         foreach ($permissions as $permission) {
             Permission::findOrCreate($permission, 'web');
         }
@@ -32,7 +33,7 @@ class IdentitySeeder extends Seeder
         }
         // Add the new ticket permissions to built-in roles without removing administrator custom grants.
         foreach ([
-            'Administrator' => [...$ticketPermissions, 'calls.dial'],
+            'Administrator' => [...$ticketPermissions, 'calls.dial', 'sms.view'],
             'Support' => ['tickets.view', 'tickets.create', 'tickets.update', 'tickets.assign', 'tickets.reply', 'tickets.internal', 'tickets.manage', 'tickets.reports', 'tickets.portal'],
             'Operations' => ['tickets.view', 'tickets.create', 'tickets.update', 'tickets.assign', 'tickets.reply', 'tickets.internal', 'tickets.reports'],
         ] as $name => $grants) {

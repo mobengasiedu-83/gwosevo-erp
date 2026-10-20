@@ -2,7 +2,7 @@
 
 **Edition:** 20 October 2026. [Return to the user guide](README.md).
 
-The feature tables below reproduce the supplied Module Feature Breakdown as a requirements reference. Modules 01–08 are installed within the boundaries explained in the user guide. Modules 09–22 are planned. No future-module procedures are fabricated.
+The feature tables below reproduce the supplied Module Feature Breakdown as a requirements reference. Modules 01–09 are installed within the boundaries explained in the user guide. Modules 10–22 are planned. No future-module procedures are fabricated.
 
 ## Module 01 System Administration & Configuration
 
@@ -184,7 +184,7 @@ See [Module 05 setup and user guide](../module-five.md). The specifications requ
 
 ## Module 09 SMS & Communication Management
 
-**Status:** Planned — not installed. No operational screens or end-to-end user procedures are available yet.
+**Status:** Installed locally with TXTConnect sending, consent management, templates, scheduled campaigns, queue processing and message history. Provider delivery receipts and automated application-triggered notifications remain commissioning items.
 
 **Purpose:** Manage authorized SMS through TXTConnect.
 
@@ -204,7 +204,7 @@ See [Module 05 setup and user guide](../module-five.md). The specifications requ
 | Usage Reports | Submission, failures and costs |
 | History | Associate messages with ERP records |
 
-**Before operational use:** approve the provider interface, event mapping, lawful recording policy and role assignments; configure the encrypted connection profile and signing secret; then verify events against the provider.
+**Before operational use:** verify TXTConnect credentials and sender ID, grant narrowly scoped SMS permissions, obtain and record consent evidence, configure the scheduler and queue worker, and confirm delivery-status API details with TXTConnect.
 
 ## Module 10 Marketing, Campaigns & Lead Generation
 

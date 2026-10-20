@@ -11,12 +11,28 @@ use App\Models\AccessReview;
 use App\Models\PbxConnection;
 use App\Models\SystemSetting;
 use App\Models\User;
+use App\Models\SmsCampaign;
+use App\Jobs\SendSmsMessage;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Schedule;
 
 Schedule::command('tickets:check-sla')->everyFiveMinutes()->withoutOverlapping();
+
+Artisan::command('sms:dispatch-scheduled', function () {
+    SmsCampaign::where('status', 'scheduled')->whereNotNull('scheduled_at')->where('scheduled_at', '<=', now())
+        ->orderBy('id')->chunkById(50, function ($campaigns) {
+            foreach ($campaigns as $campaign) {
+                $changed = SmsCampaign::whereKey($campaign->id)->where('status', 'scheduled')->update(['status' => 'queued', 'started_at' => now()]);
+                if (! $changed) continue;
+                $campaign->messages()->where('status', 'queued')->pluck('id')->each(fn ($id) => SendSmsMessage::dispatch($id)->onQueue('sms'));
+            }
+        });
+    $this->info('Due SMS campaigns have been dispatched to the sms queue.');
+})->purpose('Queue due SMS campaigns');
+
+Schedule::command('sms:dispatch-scheduled')->everyMinute()->withoutOverlapping();
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());

@@ -10,7 +10,7 @@ return [
         'contracts' => ['name' => '06 · Quotations, Contracts & Client Onboarding', 'available' => true, 'required' => false],
         'contact_centre' => ['name' => '07 · Contact Centre & VitalPBX', 'available' => true],
         'support' => ['name' => '08 · Customer Support & Ticketing', 'available' => true],
-        'sms' => ['name' => '09 · SMS & Communication Management', 'available' => false],
+        'sms' => ['name' => '09 · SMS & Communication Management', 'available' => true],
         'marketing' => ['name' => '10 · Marketing, Campaigns & Lead Generation', 'available' => false],
         'hr' => ['name' => '11 · Human Resources & Employee Records', 'available' => false],
         'recruitment' => ['name' => '12 · Recruitment & Assessments', 'available' => false],
