@@ -1,0 +1,1 @@
+<x-layouts.guest :title="'Assessment received'" description="Your assessment has been submitted." eyebrow="Candidate assessment"><div class="rounded bg-white p-6 shadow-sm"><h1 class="text-2xl font-bold">Assessment submitted</h1><p class="mt-3">Your responses have been received. The recruitment team will review them.</p></div></x-layouts.guest>

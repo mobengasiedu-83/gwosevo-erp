@@ -12,7 +12,7 @@ class Lead extends Model
     public const STATUSES = ['new', 'assigned', 'qualified', 'converted', 'disqualified'];
 
     protected $fillable = [
-        'custom_values', 'organization_id', 'reference', 'first_name', 'last_name', 'email', 'phone', 'phone_normalized', 'company_name',
+        'custom_values', 'organization_id', 'reference', 'first_name', 'last_name', 'email', 'phone', 'phone_normalized', 'marketing_campaign_id', 'marketing_affiliate_id', 'company_name',
         'industry', 'interests', 'source', 'source_detail', 'status', 'owner_id', 'assigned_at', 'qualified_at',
         'budget', 'authority', 'need', 'timeline', 'score', 'next_follow_up_at', 'converted_at',
         'account_id', 'contact_id', 'opportunity_id', 'duplicate_of_id', 'duplicate_reviewed_by', 'duplicate_reviewed_at',
@@ -71,6 +71,11 @@ class Lead extends Model
     public function opportunity(): BelongsTo
     {
         return $this->belongsTo(Opportunity::class);
+    }
+
+    public function marketingAffiliate(): BelongsTo
+    {
+        return $this->belongsTo(MarketingAffiliate::class, 'marketing_affiliate_id');
     }
 
     public function scopeForOrganization(Builder $query, int $organizationId): Builder

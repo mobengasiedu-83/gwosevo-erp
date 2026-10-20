@@ -1,0 +1,1 @@
+<x-layouts.guest :title="'Offer response recorded'" description="Your offer response has been recorded." eyebrow="Employment offer"><div class="rounded bg-white p-6 shadow-sm"><h1 class="text-2xl font-bold">Response recorded</h1><p class="mt-3">Your offer has been marked <strong>{{ $offer->status }}</strong>. The recruitment team will follow up.</p></div></x-layouts.guest>

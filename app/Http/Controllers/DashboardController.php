@@ -31,11 +31,11 @@ class DashboardController extends Controller
         $contractAlerts = app(Modules::class)->enabled('contracts') && $user->can('contracts.view') ? $user->unreadNotifications()->where('type', ContractRenewalNotification::class)->latest()->take(5)->get() : collect();
         $statusCounts = $showCRM ? (clone $query)->selectRaw('status, count(*) as total')->groupBy('status')->pluck('total', 'status') : collect();
         $reviews = AccessReview::whereNull('completed_at');
-        if (! $user->hasRole('Administrator')) {
+        if (! $user->isSuperAdmin()) {
             $reviews->where('reviewer_id', $user->id);
         }
         $activity = AuditEvent::where('organization_id', $user->active_organization_id);
-        if (! $user->hasRole('Administrator')) {
+        if (! $user->isSuperAdmin()) {
             $activity->where('actor_id', $user->id);
         }
 
@@ -49,7 +49,7 @@ class DashboardController extends Controller
             'followUpActivities' => $followUpActivities, 'followUpAlerts' => $followUpAlerts,
             'followUpCount' => $showCRM ? ((clone $query)->whereNotIn('status', ['converted', 'disqualified'])->where('next_follow_up_at', '<=', now())->count() + LeadActivity::where('type', 'task')->whereNull('completed_at')->where('due_at', '<=', now())->whereHas('lead', fn ($q) => $q->whereIn('leads.id', $leadIds()))->count()) : 0,
             'reviewCount' => $reviews->count(),
-            'activeUserCount' => $user->hasRole('Administrator') ? User::where('status', 'active')->count() : null,
+            'activeUserCount' => $user->isSuperAdmin() ? User::where('status', 'active')->count() : null,
             'recentActivity' => $activity->where('event', 'not like', 'identity.access.%')->latest('id')->take(4)->get(),
         ]);
     }

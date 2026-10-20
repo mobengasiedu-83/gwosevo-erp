@@ -24,12 +24,12 @@ class StructureController extends Controller
 
     private function access(Organization $organization): void
     {
-        abort_unless(auth()->user()->hasRole('Administrator') || ($organization->is_active && auth()->user()->organizations()->where('organizations.id', $organization->id)->exists()), 403);
+        abort_unless(auth()->user()->isSuperAdmin() || ($organization->is_active && auth()->user()->organizations()->where('organizations.id', $organization->id)->exists()), 403);
     }
 
     public function index(Request $request)
     {
-        $organizations = Organization::with('legalEntity')->when(! $request->user()->hasRole('Administrator'), fn ($q) => $q->where('is_active', true)->whereHas('users', fn ($q) => $q->where('users.id', $request->user()->id)))->orderBy('name')->get();
+        $organizations = Organization::with('legalEntity')->when(! $request->user()->isSuperAdmin(), fn ($q) => $q->where('is_active', true)->whereHas('users', fn ($q) => $q->where('users.id', $request->user()->id)))->orderBy('name')->get();
 
         return view('organization.index', compact('organizations'));
     }

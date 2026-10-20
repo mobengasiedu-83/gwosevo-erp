@@ -13,7 +13,12 @@ class IdentitySeeder extends Seeder
     {
         $ticketPermissions = ['tickets.view', 'tickets.create', 'tickets.update', 'tickets.assign', 'tickets.reply', 'tickets.internal', 'tickets.manage', 'tickets.reports', 'tickets.portal'];
         $smsPermissions = ['sms.view', 'sms.send', 'sms.manage', 'sms.consent.manage', 'sms.campaigns.manage'];
-        $permissions = ['leads.view', 'leads.create', 'leads.update', 'leads.archive', 'leads.export', 'leads.approve', 'leads.assign', 'leads.qualify', 'leads.convert', 'leads.disqualify', 'leads.import', 'leads.reports.view', 'leads.rules.manage', 'leads.duplicate.review', 'opportunities.view', 'opportunities.create', 'opportunities.update', 'opportunities.assign', 'opportunities.approve', 'opportunities.catalog.manage', 'opportunities.targets.manage', 'opportunities.reports.view', 'quotes.view', 'quotes.create', 'quotes.update', 'quotes.approve', 'contracts.view', 'contracts.create', 'contracts.update', 'contracts.templates.manage', 'contracts.onboarding.manage', 'contracts.handover', 'contracts.portal.manage', 'calls.view', 'calls.disposition', 'calls.configure', 'calls.dial', 'calls.recordings.view', 'calls.supervise', 'calls.qa.manage', ...$ticketPermissions, ...$smsPermissions];
+        $marketingPermissions = ['marketing.view', 'marketing.manage', 'marketing.tasks.manage', 'marketing.consent.manage', 'marketing.landing_pages.manage', 'marketing.affiliates.manage', 'marketing.reports.view'];
+        $hrPermissions = ['hr.view','hr.manage','hr.sensitive.view','hr.sensitive.manage','hr.contracts.manage','hr.documents.view','hr.documents.manage','hr.cases.view','hr.cases.manage','hr.training.manage','hr.reports.view'];
+        $recruitmentPermissions = ['recruitment.view','recruitment.manage','recruitment.requisitions.approve','recruitment.applications.view','recruitment.applications.manage','recruitment.interviews.manage','recruitment.assessments.manage','recruitment.offers.manage','recruitment.offers.approve','recruitment.hire','recruitment.reports.view'];
+        $performancePermissions = ['performance.view','performance.manage','performance.reviews.self','performance.reviews.manager','performance.reviews.approve','performance.calibrate','performance.kpis.manage','performance.feedback.manage','performance.feedback.respond','performance.plans.manage','performance.reports.view'];
+        $attendancePermissions = ['attendance.view','attendance.manage','attendance.self','attendance.clock','attendance.approve','attendance.balances.manage','attendance.shifts.manage','attendance.reports.view','attendance.timesheets.manage'];
+        $permissions = ['leads.view', 'leads.create', 'leads.update', 'leads.archive', 'leads.export', 'leads.approve', 'leads.assign', 'leads.qualify', 'leads.convert', 'leads.disqualify', 'leads.import', 'leads.reports.view', 'leads.rules.manage', 'leads.duplicate.review', 'opportunities.view', 'opportunities.create', 'opportunities.update', 'opportunities.assign', 'opportunities.approve', 'opportunities.catalog.manage', 'opportunities.targets.manage', 'opportunities.reports.view', 'quotes.view', 'quotes.create', 'quotes.update', 'quotes.approve', 'contracts.view', 'contracts.create', 'contracts.update', 'contracts.templates.manage', 'contracts.onboarding.manage', 'contracts.handover', 'contracts.portal.manage', 'calls.view', 'calls.disposition', 'calls.configure', 'calls.dial', 'calls.recordings.view', 'calls.supervise', 'calls.qa.manage', ...$ticketPermissions, ...$smsPermissions, ...$marketingPermissions, ...$hrPermissions, ...$recruitmentPermissions, ...$performancePermissions, ...$attendancePermissions];
         foreach ($permissions as $permission) {
             Permission::findOrCreate($permission, 'web');
         }
@@ -31,11 +36,12 @@ class IdentitySeeder extends Seeder
                 $role->givePermissionTo($grants);
             }
         }
-        // Add the new ticket permissions to built-in roles without removing administrator custom grants.
+        // Add newly registered permissions to built-in roles without removing administrator custom grants.
         foreach ([
-            'Administrator' => [...$ticketPermissions, 'calls.dial', 'sms.view'],
+            'Administrator' => $permissions,
             'Support' => ['tickets.view', 'tickets.create', 'tickets.update', 'tickets.assign', 'tickets.reply', 'tickets.internal', 'tickets.manage', 'tickets.reports', 'tickets.portal'],
             'Operations' => ['tickets.view', 'tickets.create', 'tickets.update', 'tickets.assign', 'tickets.reply', 'tickets.internal', 'tickets.reports'],
+            'Human Resources' => [...$hrPermissions, 'recruitment.view','recruitment.manage','recruitment.applications.view','recruitment.applications.manage','recruitment.interviews.manage','recruitment.assessments.manage','recruitment.offers.manage','recruitment.hire','recruitment.reports.view','performance.view','performance.reviews.self','performance.reviews.manager','performance.kpis.manage','performance.feedback.manage','performance.feedback.respond','performance.plans.manage','performance.reports.view', ...$attendancePermissions],
         ] as $name => $grants) {
             Role::findOrCreate($name, 'web')->givePermissionTo($grants);
         }

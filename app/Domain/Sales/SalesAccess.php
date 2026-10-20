@@ -15,7 +15,7 @@ class SalesAccess
         $query = Opportunity::query()->where('organization_id', $organizationId);
         $organizationId = (int) $organizationId;
         if (! $user->isActive() || ! $organizationId || ! app(\App\Domain\Administration\Modules::class)->enabled('sales')) return $query->whereRaw('1 = 0');
-        if ($user->hasRole('Administrator')) return $query;
+        if ($user->isSuperAdmin()) return $query;
         $membership = $user->organizations()->whereKey($organizationId)->first()?->pivot;
         if (! $membership) return $query->whereRaw('1 = 0');
         if ($membership->scope === 'organization') return $query;

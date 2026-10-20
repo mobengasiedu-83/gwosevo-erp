@@ -18,7 +18,7 @@ class ReviewController extends Controller
     public function index(Request $request)
     {
         $query = AccessReview::query();
-        if (! $request->user()->hasRole('Administrator')) {
+        if (! $request->user()->isSuperAdmin()) {
             $query->where('reviewer_id', $request->user()->id);
         }
 
@@ -27,7 +27,7 @@ class ReviewController extends Controller
 
     public function store(Request $request, AccessReviews $reviews)
     {
-        abort_unless($request->user()->hasRole('Administrator'), 403);
+        abort_unless($request->user()->isSuperAdmin(), 403);
         $data = $request->validate(['name' => ['required', 'string', 'max:150'], 'reviewer_id' => ['required', 'integer', Rule::exists('users', 'id')->where('status', 'active')], 'due_at' => ['required', 'date', 'after:now']]);
         $review = $reviews->create($data['name'], User::findOrFail($data['reviewer_id']), $request->user(), $data['due_at']);
 
@@ -73,7 +73,7 @@ class ReviewController extends Controller
 
     public function complete(Request $request, AccessReview $review, AccessReviews $reviews)
     {
-        abort_unless($request->user()->hasRole('Administrator'), 403);
+        abort_unless($request->user()->isSuperAdmin(), 403);
         $reviews->complete($review, $request->user());
 
         return back()->with('success', 'Review completed and locked. Revocation decisions were applied.');
@@ -81,6 +81,6 @@ class ReviewController extends Controller
 
     private function authorizeReview(Request $request, AccessReview $review): void
     {
-        abort_unless($request->user()->hasRole('Administrator') || $review->reviewer_id === $request->user()->id, 403);
+        abort_unless($request->user()->isSuperAdmin() || $review->reviewer_id === $request->user()->id, 403);
     }
 }

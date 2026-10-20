@@ -1,12 +1,12 @@
 # GWO SEVO ERP
 
-Laravel 12, Blade and Livewire ERP for GWO SEVO Solutions. Modules 01–08 are installed: system administration, identity and access, organization structure, CRM lead management, sales pipeline, quotations/contracts/client onboarding, contact centre with VitalPBX integration, and customer support ticketing.
+Laravel 12, Blade and Livewire ERP for GWO SEVO Solutions. Modules 01–14 are installed locally: system administration, identity and access, organization structure, CRM lead management, sales pipeline, quotations/contracts/client onboarding, contact centre with VitalPBX integration, customer support ticketing, TXTConnect SMS, marketing campaigns, human resources, recruitment/assessments, performance management, and attendance/leave/self-service.
 
 The UI follows the GWO SEVO website's green/red/yellow/charcoal brand, using local logos, imagery, Inter and Poppins. It includes responsive workspace navigation, keyboard quick navigation (Ctrl/Cmd K), branded authentication pages and accessible confirmation dialogs. It honors reduced-motion preferences.
 
 ## User documentation
 
-Read the [complete user guide](docs/user-guide/README.md) for sign-in, navigation, Modules 01–09, administration, troubleshooting and setup. The [22-module catalogue and roadmap](docs/user-guide/module-roadmap.md) identifies installed, partial and planned capabilities. See also the [Module 09 SMS setup guide](docs/module-nine.md).
+Read the [complete user guide](docs/user-guide/README.md) for sign-in, navigation, Modules 01–14, administration, troubleshooting and setup. The [22-module catalogue and roadmap](docs/user-guide/module-roadmap.md) identifies installed, partial and planned capabilities. See also the [Module 09 SMS setup guide](docs/module-nine.md), [Module 10 marketing guide](docs/module-ten.md), [Module 11 HR guide](docs/module-eleven.md), [Module 12 recruitment guide](docs/module-twelve.md), [Module 13 performance guide](docs/module-thirteen.md), and [Module 14 attendance guide](docs/module-fourteen.md).
 
 ## Current local installation
 

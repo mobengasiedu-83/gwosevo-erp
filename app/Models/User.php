@@ -75,13 +75,22 @@ class User extends Authenticatable
         return $this->status === 'active';
     }
 
+    /**
+     * System administrators bypass module permissions and organization scopes.
+     * Keep the legacy Administrator role as an alias for Super Admin.
+     */
+    public function isSuperAdmin(): bool
+    {
+        return $this->isActive() && $this->hasAnyRole(['Super Admin', 'Superadmin', 'Administrator']);
+    }
+
     public function requiresMfa(): bool
     {
         if (! config('identity.mfa_required', true)) {
             return false;
         }
 
-        return $this->require_mfa || $this->hasRole('Administrator') || $this->can('leads.approve') || $this->roles()->where('requires_mfa', true)->exists();
+        return $this->require_mfa || $this->isSuperAdmin() || $this->can('leads.approve') || $this->roles()->where('requires_mfa', true)->exists();
     }
 
     public function canAccessOrganization(int $organizationId): bool
@@ -90,7 +99,7 @@ class User extends Authenticatable
             return false;
         }
 
-        return $this->hasRole('Administrator')
+        return $this->isSuperAdmin()
             || $this->organizations()->whereKey($organizationId)->exists();
     }
 }

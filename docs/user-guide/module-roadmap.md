@@ -2,7 +2,7 @@
 
 **Edition:** 20 October 2026. [Return to the user guide](README.md).
 
-The feature tables below reproduce the supplied Module Feature Breakdown as a requirements reference. Modules 01–09 are installed within the boundaries explained in the user guide. Modules 10–22 are planned. No future-module procedures are fabricated.
+The feature tables below reproduce the supplied Module Feature Breakdown as a requirements reference. Modules 01–14 are installed within the boundaries explained in the user guide. Modules 15–22 are planned. No future-module procedures are fabricated.
 
 ## Module 01 System Administration & Configuration
 
@@ -156,7 +156,7 @@ See [Module 05 setup and user guide](../module-five.md). The specifications requ
 | Quality Assurance | Evaluation forms and scoring |
 | Supervisor Dashboard | Agent and queue performance |
 
-**Before operational use:** approve the provider interface, event mapping, lawful recording policy and role assignments; configure the encrypted connection profile and signing secret; then verify events against the provider.
+**Before operational use:** review HR permissions and retention rules, configure the organization structure, assign the Human Resources role only to authorized staff, and ensure production storage permissions and encrypted backups protect the Laravel `APP_KEY` and private document files. Disable application accounts separately during offboarding.
 
 ## Module 08 Customer Support & Ticketing
 
@@ -208,7 +208,7 @@ See [Module 05 setup and user guide](../module-five.md). The specifications requ
 
 ## Module 10 Marketing, Campaigns & Lead Generation
 
-**Status:** Planned — not installed. No operational screens or end-to-end user procedures are available yet.
+**Status:** Installed locally. Campaign planning, scoped CRM segments, campaign tasks and budgets, landing-page lead capture, affiliate attribution, and channel-specific consent records are available. Outbound campaign delivery and commission settlement are not included.
 
 **Purpose:** Measure acquisition campaigns and lead attribution.
 
@@ -231,7 +231,7 @@ See [Module 05 setup and user guide](../module-five.md). The specifications requ
 
 ## Module 11 Human Resources & Employee Records
 
-**Status:** Planned — not installed. No operational screens or end-to-end user procedures are available yet.
+**Status:** Installed locally with restricted employee, employment-contract, private document, assignment-history, onboarding/offboarding checklist, disciplinary-case, training and headcount/tenure/turnover workflows. Account deactivation remains an explicit operation in Users & Access.
 
 **Purpose:** Maintain protected employee records and lifecycle.
 
@@ -255,7 +255,7 @@ See [Module 05 setup and user guide](../module-five.md). The specifications requ
 
 ## Module 12 Recruitment & Assessments
 
-**Status:** Planned — not installed. No operational screens or end-to-end user procedures are available yet.
+**Status:** Installed locally. Requisitions, approval decisions, published vacancies and public applications, candidate screening, interview scheduling/scoring, timed assessments, practical and speech submissions, offer approval/response, employee conversion, and scoped funnel/time-to-hire reporting are available.
 
 **Purpose:** Manage vacancies, candidates and hiring decisions.
 
@@ -276,11 +276,11 @@ See [Module 05 setup and user guide](../module-five.md). The specifications requ
 | Hiring Conversion | Successful applicant to employee |
 | Reports | Time-to-hire and funnel performance |
 
-**Before operational use:** approve the provider interface, event mapping, lawful recording policy and role assignments; configure the encrypted connection profile and signing secret; then verify events against the provider.
+**Before operational use:** run the Module 12 migration and the additive `IdentitySeeder`; authorize the Human Resources and independent approver roles; set the candidate privacy, consent, retention and data-access rules; and agree the assessment questions, interview scoring rubric, offer approval authority, and candidate communication process.
 
 ## Module 13 Performance Management & Appraisals
 
-**Status:** Planned — not installed. No operational screens or end-to-end user procedures are available yet.
+**Status:** Installed locally with the boundaries in the [Module 13 operations guide](../module-thirteen.md).
 
 **Purpose:** Set goals, evaluate performance and track improvement.
 
@@ -303,11 +303,11 @@ See [Module 05 setup and user guide](../module-five.md). The specifications requ
 | Development Plans | Training and growth actions |
 | History & Analytics | Trends, completion and attainment |
 
-**Before operational use:** approve the provider interface, event mapping, lawful recording policy and role assignments; configure the encrypted connection profile and signing secret; then verify events against the provider.
+**Before operational use:** approve review-cycle timing and scoring weights, assign HR cycle permissions and independent calibration/approval roles, verify employee-manager links and linked ERP accounts, and set evidence, privacy and retention rules.
 
 ## Module 14 Attendance, Leave & Employee Self-Service
 
-**Status:** Planned — not installed. No operational screens or end-to-end user procedures are available yet.
+**Status:** Installed locally with the boundaries in the [Module 14 operations guide](../module-fourteen.md).
 
 **Purpose:** Enable time, leave and employee requests.
 
@@ -326,7 +326,7 @@ See [Module 05 setup and user guide](../module-five.md). The specifications requ
 | Manager Portal | Team attendance and approvals |
 | Reports | Absence, lateness and leave utilization |
 
-**Before operational use:** approve the provider interface, event mapping, lawful recording policy and role assignments; configure the encrypted connection profile and signing secret; then verify events against the provider.
+**Before operational use:** set annual entitlements and carryover rules, assign self-service and independent approval permissions, verify employee-to-user and manager links, configure shifts and the organization holiday calendar, and establish attendance correction and retention practices.
 
 ## Module 15 Projects, Tasks & Team Productivity
 

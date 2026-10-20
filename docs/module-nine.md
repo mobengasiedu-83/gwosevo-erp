@@ -17,7 +17,7 @@ Keep the API key out of source control. Clear cached config after changing `.env
 
 ## Access and consent
 
-The permission names are `sms.view`, `sms.send`, `sms.manage`, `sms.consent.manage` and `sms.campaigns.manage`. The Administrator role receives `sms.view` only. No role receives outbound send, campaign, consent or template management by default. In Administration → Roles & Permissions, grant the other SMS permissions only to staff responsible for them.
+The permission names are `sms.view`, `sms.send`, `sms.manage`, `sms.consent.manage` and `sms.campaigns.manage`. The active Administrator role is the application superadmin and has all registered permissions. Other roles receive only their configured grants; assign SMS sending, campaign, consent and template permissions only to the staff responsible for them.
 
 Open Operations → SMS centre. Record each recipient's explicit opt-in and evidence source before sending. The active organization and opt-in record are checked again for each message/campaign. Opt-out records block future sends. Enter phone numbers in international format. The ERP does not infer consent from CRM data or automatically import CRM contacts.
 

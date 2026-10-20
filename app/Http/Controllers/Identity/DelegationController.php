@@ -16,7 +16,7 @@ class DelegationController extends Controller
     public function index(Request $request)
     {
         $query = ApprovalDelegation::query();
-        if (! $request->user()->hasRole('Administrator')) {
+        if (! $request->user()->isSuperAdmin()) {
             $query->where(fn ($q) => $q->where('delegator_id', $request->user()->id)->orWhere('delegate_id', $request->user()->id));
         }
 
@@ -29,7 +29,7 @@ class DelegationController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate(['delegator_id' => ['required', 'integer', Rule::exists('users', 'id')->where('status', 'active')], 'delegate_id' => ['required', 'integer', 'different:delegator_id', Rule::exists('users', 'id')->where('status', 'active')], 'permission' => ['required', Rule::in(['leads.approve'])], 'starts_at' => ['required', 'date', 'after_or_equal:today'], 'ends_at' => ['required', 'date', 'after:starts_at', 'before_or_equal:'.now()->addDays(90)->toDateTimeString()], 'reason' => ['required', 'string', 'max:1000']]);
-        abort_unless($request->user()->hasRole('Administrator') || (int) $data['delegator_id'] === $request->user()->id, 403);
+        abort_unless($request->user()->isSuperAdmin() || (int) $data['delegator_id'] === $request->user()->id, 403);
         $principal = User::findOrFail($data['delegator_id']);
         $delegate = User::findOrFail($data['delegate_id']);
         $organization = $request->user()->active_organization_id;
@@ -46,7 +46,7 @@ class DelegationController extends Controller
 
     public function revoke(Request $request, ApprovalDelegation $delegation)
     {
-        abort_unless($request->user()->hasRole('Administrator') || $delegation->delegator_id === $request->user()->id, 403);
+        abort_unless($request->user()->isSuperAdmin() || $delegation->delegator_id === $request->user()->id, 403);
         DB::transaction(function () use ($delegation, $request) {
             $delegation->update(['revoked_at' => now()]);
             IdentityAudit::change('delegation.revoked', $request->user()->id, null, ['delegation_id' => $delegation->id]);

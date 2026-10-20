@@ -3,7 +3,7 @@
 **Edition:** 20 October 2026 · **Audience:** staff, supervisors, reviewers and administrators
 **Application:** <https://localhost/gwosevo-erp/public/>
 
-This guide describes the application currently installed in this repository. Modules 01–09 are installed within the commissioning boundaries described here. Modules 10–22 remain planned and do not have operational user screens yet. Their feature catalogue is included in the [module roadmap](module-roadmap.md).
+This guide describes the application currently installed in this repository. Modules 01–14 are installed within the commissioning boundaries described here. Modules 15–22 remain planned. Their feature catalogue is included in the [module roadmap](module-roadmap.md).
 
 The names “superadmin” and “Administrator” refer here to the existing Administrator account/role. This guide contains no account passwords, invitation tokens or integration secrets.
 
@@ -20,12 +20,13 @@ The names “superadmin” and “Administrator” refer here to the existing Ad
 9. [Module 07 — Contact centre and VitalPBX](#module-07--contact-centre-and-vitalpbx)
 10. [Module 08 — Customer support and ticketing](#module-08--customer-support-and-ticketing)
 11. [Module 09 — SMS and communication management](#module-09--sms-and-communication-management)
-12. [Modules 10–22 — Planned capabilities](#modules-1022--planned-capabilities)
-12. [Daily and periodic routines](#daily-and-periodic-routines)
-13. [Troubleshooting](#troubleshooting)
-14. [Administrator setup checklist](#administrator-setup-checklist)
-15. [Glossary](#glossary)
-16. [Technical and commissioning notes](#technical-and-commissioning-notes)
+12. [Module 10 — Marketing campaigns and lead generation](#module-10--marketing-campaigns-and-lead-generation)
+13. [Module 11 — Human resources and employee records](#module-11--human-resources-and-employee-records)
+14. [Daily and periodic routines](#daily-and-periodic-routines)
+15. [Troubleshooting](#troubleshooting)
+16. [Administrator setup checklist](#administrator-setup-checklist)
+17. [Glossary](#glossary)
+18. [Technical and commissioning notes](#technical-and-commissioning-notes)
 
 ## Getting started and navigation
 
@@ -64,7 +65,7 @@ Actions such as session revocation and review completion show a confirmation dia
 
 | Person | Typical work | Access boundary |
 | --- | --- | --- |
-| Administrator | Configure settings, maintain users/roles and organization structure, inspect audits | Active Administrator role required for management screens |
+| Administrator / superadmin | Full application access, including system settings, users/roles, organization structure and all module actions | The active Administrator role is the superadmin; inactive accounts remain blocked |
 | Staff member | Use permitted workspace and CRM actions; manage personal security | Role/direct permissions plus organization and record scope |
 | Supervisor | Review permitted team/department records and organizational relationships | A job title or supervisor assignment alone does not grant permissions |
 | Assigned reviewer | Inspect assigned access reviews and record decisions | Review assignment or Administrator role required |
@@ -451,7 +452,7 @@ The screen provides call and queue summaries, inbound/outbound/missed/abandoned 
 
 To commission a provider, an authorized user creates a PBX profile. The webhook signing secret is shown once in the success message; store it in the approved PBX configuration. Set the approved HTTPS API base URL, then activate the profile to accept signed inbound events at `/api/v1/pbx/{connection}/events`. Requests use `X-PBX-Timestamp` and `X-PBX-Signature`, where the signature is HMAC-SHA256 over `<timestamp>.<raw request body>` using the profile secret; timestamps must be within five minutes. Events are rate limited. The supported payloads are `call.completed` and `agent.activity`; consult the integration owner before mapping VitalPBX/Asterisk events to them.
 
-**Provider commissioning remains required:** configure the VitalPBX HTTPS API key and tenant in `.env`, map each ERP user to their own extension, and grant `calls.dial` to users allowed to place calls. The Administrator role includes this permission; restrict it through Roles & Permissions if some administrators should not dial. **Click to dial** rings the selected user's mapped extension first; after they answer, VitalPBX calls the entered destination. The API key stays on the server. Recording links are stored as references only; downloads are not provided. The known CDR `getRecordingAuthParam()` exception is raised by VitalPBX and must be corrected by the PBX vendor/update path.
+**Provider commissioning remains required:** configure the VitalPBX HTTPS API key and tenant in `.env` and map each ERP user to their own extension. Active Administrator/superadmin accounts can dial; regular users need `calls.dial`. **Click to dial** rings the selected user's mapped extension first; after they answer, VitalPBX calls the entered destination. The API key stays on the server. Recording links are stored as references only; downloads are not provided. The known CDR `getRecordingAuthParam()` exception is raised by VitalPBX and must be corrected by the PBX vendor/update path.
 
 For manual calls, enter the event and number details; the ERP attempts an exact phone-digit match against the active organization. Verify caller identity before linking the call to a customer. Add a disposition and follow-up after the call. Supervisors create a quality form using one criterion per line, then score each criterion from 0 to 5.
 
@@ -475,7 +476,7 @@ Laravel email attempts and successful sends are recorded in `storage/logs/email.
 
 ## Module 09 — SMS and communication management
 
-**Status:** Installed locally. Open Operations → **SMS centre** after the role has `sms.view`; the Administrator role receives read-only access. Permissions are separate so organizations can grant sending, campaign management, consent administration and template management only to the staff responsible. The seeder defines all permission names but does not grant outbound sending, campaign, consent or template management to any role. Assign only the required `sms.*` permissions in Administration → Roles & Permissions.
+**Status:** Installed locally. Open Operations → **SMS centre**. The active Administrator/superadmin has all SMS permissions. Other roles have only their configured grants; assign sending, campaign management, consent administration and template management to the staff responsible through Administration → Roles & Permissions.
 
 Configure the local `.env` using the TXTConnect API key and an approved sender ID:
 
@@ -494,16 +495,69 @@ Start a queue worker that listens on the `sms` queue, for example `php artisan q
 
 Each message history entry can link to an organization contact or support ticket. SMS bodies and recipient phone numbers are personal data; assign `sms.view` and reporting access accordingly, and follow the organization's retention and consent policy. No SMS is sent as part of the local migration or permission seeding.
 
-## Modules 10–22 — Planned capabilities
+## Module 10 — Marketing campaigns and lead generation
+
+**Status:** Installed locally. Open Commercial → **Marketing campaigns**. The active Administrator/superadmin can view and manage campaigns, tasks, contact preferences, landing pages, and affiliate records. Other roles need `marketing.view` plus the relevant management permissions assigned through Administration → Roles & Permissions.
+
+Plan campaigns by objective, channel, owner, dates and budget. Optional CRM audience filters are evaluated within the signed-in user's lead access scope. Open a campaign to activate/pause/complete it, record actual spend, add tasks, and review campaign-attributed leads when you also have `leads.view`.
+
+Users with landing-page management access can create a draft or published lead form for a campaign. The public URL appears after saving. Publish it only after the campaign is active. The form stores a new CRM lead with campaign and optional affiliate attribution. Email and SMS consent boxes are optional and unchecked; an SMS opt-in also updates Module 09's SMS consent register. Marketing consent records and destinations are visible only to users with `marketing.consent.manage`.
+
+The module does not send campaign email or SMS, customize landing-page layout, calculate commissions, settle affiliate payments, or attribute won revenue/ROI. Conversion counts use converted CRM leads. Use Module 09 for separately authorized, consent-checked SMS sends. Campaign actual spend is a reporting figure and does not create a finance entry. No Module 10 environment variables are required.
+
+## Module 11 — Human resources and employee records
+
+**Status:** Installed locally. Open Human Resources → **Employee directory**. The Human Resources role receives the Module 11 permissions when `IdentitySeeder` runs. The active Administrator/superadmin can also access all HR functions. Other roles must be assigned `hr.view` and only the management permissions they need.
+
+The directory is scoped to an organization. Create an employee record with an employee number, employment type/status, work contact details and assignment. Link an ERP account only when the employee is an active member of that organization. Department, team, branch, position and manager are stored as HR assignments; maintain the separate Organization structure membership when you need those values to govern ERP access.
+
+Personal and emergency details require `hr.sensitive.view` / `hr.sensitive.manage`. Contract terms and disciplinary case content use encrypted database casts and separate restricted permissions. Employee documents are encrypted with the application key and stored on Laravel's private local disk; only users with `hr.documents.view` can download them. Preserve the production `APP_KEY` and encrypted private storage backups together. A key loss makes encrypted HR details and files unreadable.
+
+Add employment contract dates and renewal dates to see upcoming renewals. Record job changes, add onboarding/offboarding checklist tasks, maintain training courses and employee completion/certificate records, and use the reports for headcount by status, average recorded tenure and a simple 12-month turnover percentage.
+
+Marking an employee **Terminated** does not deactivate a linked ERP login. Use Administration → **Users & access** to suspend or deactivate that account; this keeps access revocation, session termination and the protected last-administrator recovery rule in the identity workflow. Checklist creation is manual; the module does not auto-create tasks or perform payroll, attendance, leave balances, asset transactions, or HR approvals.
+
+The application encrypts HR restricted fields and uploaded files using `APP_KEY`. Review applicable employment, privacy, retention, and access policies before production use; limit document and disciplinary-case permissions to authorized HR staff.
+
+## Module 12 — Recruitment and assessments
+
+**Status:** Installed locally. Open Human Resources → **Recruitment & assessments**. The Human Resources role receives candidate, interview, assessment, offer-management and hiring permissions when `IdentitySeeder` runs. Requisition approval and offer approval are separate grants. Assign `recruitment.view` and `recruitment.applications.view` with `recruitment.requisitions.approve` or `recruitment.offers.approve` to the appropriate independent approvers.
+
+Submit and approve a hiring requisition before creating a vacancy. Publish the vacancy to make its public careers page available. Applicants must agree to the recruitment use notice; candidate profile details and resumes are stored encrypted. Recruiters with `recruitment.applications.view` can review applicants and resumes; `recruitment.applications.manage` permits stage changes and screening notes.
+
+Create interview schedules and record scores with `recruitment.interviews.manage`. Create a timed assessment template with one question or criterion per line, assign it, and share the candidate link shown after assignment. Practical and speech assessment uploads are encrypted. Assessors score submissions manually; there is no automated speech transcription, integrity monitoring or automatic score calculation.
+
+Offer terms require an authorized approver. After approval, the generated response link is shown once for HR to share using the organization's approved communication process; the application does not email candidates. Convert only an accepted offer to an HR employee record. The new record begins in preboarding and does not create a login automatically. Use the applicant funnel and average time-to-hire report for organization-scoped summaries.
+
+Candidate data is encrypted using `APP_KEY`. The system records consent but does not enforce a retention period or automatically purge candidate records. Set the organization's privacy, retention and assessment policies before publishing vacancies. See the [Module 12 recruitment guide](../module-twelve.md) for the detailed workflow and permissions.
+
+## Module 13 — Performance management and appraisals
+
+**Status:** Installed locally. Open Human Resources → **Performance & appraisals**. The Human Resources role receives cycle viewing, self and manager review, KPI, feedback, plan, and reporting permissions from `IdentitySeeder`. Cycle management is a separate grant; calibration and final approval are independent permissions that should be assigned to different authorized reviewers. The superadmin has access to all module actions.
+
+Create a monthly, quarterly, biannual or annual cycle and set goal/competency weights that total 100%. Open the cycle to create reviews for active HR employees and capture the current manager assignment. Each employee account must be linked to an active employee record to submit their own appraisal. The employee submits a narrative, 0–100 self score, competency ratings and up to three SMART goals in the form. The assigned manager reviews submitted goals, assigns attainment scores and writes a manager assessment. The application calculates a weighted goal/competency score using the cycle weights.
+
+Users with `performance.feedback.manage` can request 360 responses from an active organization member by ERP user ID. Reviewers submit a score and response from **My 360 feedback requests**; response text is encrypted and not displayed in the review screen. Users with `performance.calibrate` may adjust the calculated score and record a reason. A different authorized user with `performance.reviews.approve` signs off the calibrated score. Approved reviews remain in the organization-scoped history.
+
+Users with `performance.plans.manage` can record improvement or development plans and optionally associate a training course. Supporting evidence can be uploaded as PDF, Office documents, images or text up to 10 MB; files are encrypted with `APP_KEY` on the private local disk. Downloads require access to the associated review and are audited. Preserve the production `APP_KEY` and private storage backups together.
+
+The current screens provide a starter KPI library, up to three self-appraisal goal rows, fixed competency categories, internal 360 requests and basic plan records. KPI-to-goal autofill, bulk cycle assignment beyond active employees, employee notifications, configurable competency libraries, external feedback, PIP milestone/follow-up tracking, calibration meetings, file antivirus scanning and analytics trends are not implemented. Set review, evidence, privacy and retention procedures with HR before production use. See the [Module 13 performance guide](../module-thirteen.md).
+
+## Module 14 — Attendance, leave and employee self-service
+
+**Status:** Installed locally. Open Human Resources → **Attendance & leave**. Staff with `attendance.self` see their own attendance, leave balance, leave request, timesheet and 360-degree self-service links. Add `attendance.clock` for clock-in/out. Human Resources receives organization-wide attendance management, leave-balance, shift, approval and reporting permissions through `IdentitySeeder`; superadmin can access all actions. Direct managers may review their linked reports when assigned `attendance.view`; approval also requires `attendance.approve` or `attendance.manage` for organization-wide review.
+
+Create leave types, configure an employee's yearly entitlement/carryover/adjustment, add organization holidays, and create weekly shift schedules with grace periods. Active, linked employees can clock in and out once each day. The system records late arrival against an assigned shift and records a schedule exception when clocking in on an unscheduled weekday. HR can enter or correct attendance, including absence and exception statuses.
+
+Employees submit leave requests and timesheet entries. Leave day calculations count weekdays and exclude holidays entered for the organization; requests cannot overlap pending or approved leave, span calendar years, or exceed the available balance. Approval-required leave types wait for a manager/HR decision; types configured without approval are auto-approved. Staff may cancel pending leave and timesheet submissions. Manager/HR decisions are audited. The timesheet tracks activity and hours without project links because Module 15 is not installed.
+
+The module does not automatically generate absence records, accrue balances, restore employees' HR status after leave, schedule shifts on a rotating pattern, import a Ghana holiday feed, send reminders, or enforce payroll/overtime rules. Configure company entitlements, the holiday calendar, shift policy and retention rules with HR before production use. See the [Module 14 attendance guide](../module-fourteen.md).
+
+## Modules 15–22 — Planned capabilities
 
 These modules do not yet have operational screens in this installation. The [complete module roadmap](module-roadmap.md) lists every specified module and feature, including the distinction between current foundations and future work.
 
 | Module | Planned area |
-| 10 | Marketing, campaigns and lead generation |
-| 11 | Human resources and employee records |
-| 12 | Recruitment and assessments |
-| 13 | Performance management and appraisals |
-| 14 | Attendance, leave and employee self-service |
 | 15 | Projects, tasks and team productivity |
 | 16 | Finance, invoicing and revenue management |
 | 17 | Procurement, assets and inventory |

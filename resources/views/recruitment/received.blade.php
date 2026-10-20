@@ -1,0 +1,1 @@
+<x-layouts.guest :title="'Application received'" description="Thank you for your application." eyebrow="Careers"><div class="rounded bg-white p-6 shadow-sm"><h1 class="text-2xl font-bold">Application received</h1><p class="mt-3">Thank you for applying for <strong>{{ $vacancy->title }}</strong>. The recruitment team will review your application.</p></div></x-layouts.guest>

@@ -11,6 +11,11 @@ use App\Http\Controllers\Commercial\CommercialController;
 use App\Http\Controllers\ContactCentreController;
 use App\Http\Controllers\Support\TicketController;
 use App\Http\Controllers\SmsController;
+use App\Http\Controllers\MarketingController;
+use App\Http\Controllers\HrController;
+use App\Http\Controllers\RecruitmentController;
+use App\Http\Controllers\PerformanceController;
+use App\Http\Controllers\AttendanceController;
 use App\Models\SalesPipelineStage;
 use App\Http\Controllers\CRM\LeadAssignmentRulesController;
 use App\Http\Controllers\CRM\LeadNotificationController;
@@ -24,6 +29,14 @@ Route::get('/support/portal/{token}', [TicketController::class, 'portalShow'])->
 Route::post('/support/portal/{token}/replies', [TicketController::class, 'portalReply'])->middleware('throttle:10,1')->where('token', '[A-Za-z0-9]{64}')->name('support.portal.reply');
 Route::post('/support/portal/{token}/satisfaction', [TicketController::class, 'satisfaction'])->middleware('throttle:5,1')->where('token', '[A-Za-z0-9]{64}')->name('support.portal.satisfaction');
 Route::get('/support/portal/{token}/attachments/{attachment}', [TicketController::class, 'portalAttachment'])->where('token', '[A-Za-z0-9]{64}')->whereNumber('attachment')->name('support.portal.attachments.show');
+Route::get('/landing/{slug}', [MarketingController::class, 'publicLanding'])->where('slug', '[A-Za-z0-9-]+')->name('marketing.landing.show');
+Route::post('/landing/{slug}/leads', [MarketingController::class, 'publicLead'])->middleware('throttle:10,1')->where('slug', '[A-Za-z0-9-]+')->name('marketing.landing.leads.store');
+Route::get('/careers/{slug}', [RecruitmentController::class, 'careerShow'])->where('slug', '[A-Za-z0-9-]+')->name('careers.show');
+Route::post('/careers/{slug}/applications', [RecruitmentController::class, 'apply'])->middleware('throttle:5,1')->where('slug', '[A-Za-z0-9-]+')->name('careers.apply');
+Route::get('/candidate-assessments/{token}', [RecruitmentController::class, 'candidateAssessmentShow'])->where('token', '[A-Za-z0-9]{64}')->name('candidate-assessments.show');
+Route::post('/candidate-assessments/{token}', [RecruitmentController::class, 'candidateAssessmentSubmit'])->middleware('throttle:5,1')->where('token', '[A-Za-z0-9]{64}')->name('candidate-assessments.submit');
+Route::get('/candidate-offers/{token}', [RecruitmentController::class, 'candidateOfferShow'])->where('token', '[A-Za-z0-9]{64}')->name('candidate-offers.show');
+Route::post('/candidate-offers/{token}', [RecruitmentController::class, 'candidateOfferRespond'])->middleware('throttle:5,1')->where('token', '[A-Za-z0-9]{64}')->name('candidate-offers.respond');
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');
     Route::post('/login', [AuthenticatedSessionController::class, 'store'])->middleware('throttle:6,1');
@@ -31,6 +44,55 @@ Route::middleware('guest')->group(function () {
 Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
+    Route::prefix('recruitment')->name('recruitment.')->group(function () {
+        Route::get('/', [RecruitmentController::class, 'index'])->name('index');
+        Route::post('/requisitions', [RecruitmentController::class, 'requisitionStore'])->name('requisitions.store');
+        Route::put('/requisitions/{requisition}/decision', [RecruitmentController::class, 'requisitionDecide'])->whereNumber('requisition')->name('requisitions.decision');
+        Route::post('/vacancies', [RecruitmentController::class, 'vacancyStore'])->name('vacancies.store');
+        Route::put('/vacancies/{vacancy}', [RecruitmentController::class, 'vacancyUpdate'])->whereNumber('vacancy')->name('vacancies.update');
+        Route::get('/vacancies/{vacancy}', [RecruitmentController::class, 'vacancyShow'])->whereNumber('vacancy')->name('vacancies.show');
+        Route::put('/applications/{application}/stage', [RecruitmentController::class, 'applicationStage'])->whereNumber('application')->name('applications.stage');
+        Route::get('/applications/{application}/resume', [RecruitmentController::class, 'resume'])->whereNumber('application')->name('applications.resume');
+        Route::post('/applications/{application}/interviews', [RecruitmentController::class, 'interviewStore'])->whereNumber('application')->name('interviews.store');
+        Route::put('/interviews/{interview}/score', [RecruitmentController::class, 'interviewScore'])->whereNumber('interview')->name('interviews.score');
+        Route::post('/assessment-templates', [RecruitmentController::class, 'templateStore'])->name('assessments.templates.store');
+        Route::post('/applications/{application}/assessments', [RecruitmentController::class, 'assessmentAssign'])->whereNumber('application')->name('assessments.assign');
+        Route::put('/assessments/{assignment}/score', [RecruitmentController::class, 'assessmentScore'])->whereNumber('assignment')->name('assessments.score');
+        Route::get('/assessments/{assignment}/artifact', [RecruitmentController::class, 'assessmentArtifact'])->whereNumber('assignment')->name('assessments.artifact');
+        Route::post('/applications/{application}/offers', [RecruitmentController::class, 'offerStore'])->whereNumber('application')->name('offers.store');
+        Route::put('/offers/{offer}/approve', [RecruitmentController::class, 'offerApprove'])->whereNumber('offer')->name('offers.approve');
+        Route::post('/applications/{application}/hire', [RecruitmentController::class, 'hire'])->whereNumber('application')->name('hire');
+    });
+    Route::prefix('performance')->name('performance.')->group(function () {
+        Route::get('/', [PerformanceController::class, 'index'])->name('index');
+        Route::post('/cycles', [PerformanceController::class, 'cycleStore'])->name('cycles.store');
+        Route::post('/cycles/{cycle}/open', [PerformanceController::class, 'cycleOpen'])->whereNumber('cycle')->name('cycles.open');
+        Route::post('/kpis', [PerformanceController::class, 'kpiStore'])->name('kpis.store');
+        Route::get('/reviews/{review}', [PerformanceController::class, 'show'])->whereNumber('review')->name('reviews.show');
+        Route::put('/reviews/{review}/self', [PerformanceController::class, 'selfReview'])->whereNumber('review')->name('reviews.self');
+        Route::put('/reviews/{review}/manager', [PerformanceController::class, 'managerReview'])->whereNumber('review')->name('reviews.manager');
+        Route::put('/reviews/{review}/calibrate', [PerformanceController::class, 'calibrate'])->whereNumber('review')->name('reviews.calibrate');
+        Route::put('/reviews/{review}/approve', [PerformanceController::class, 'approve'])->whereNumber('review')->name('reviews.approve');
+        Route::post('/reviews/{review}/feedback', [PerformanceController::class, 'feedbackRequest'])->whereNumber('review')->name('feedback.store');
+        Route::put('/feedback/{feedback}', [PerformanceController::class, 'feedbackRespond'])->whereNumber('feedback')->name('feedback.respond');
+        Route::post('/reviews/{review}/plans', [PerformanceController::class, 'planStore'])->whereNumber('review')->name('plans.store');
+        Route::post('/reviews/{review}/evidence', [PerformanceController::class, 'evidenceStore'])->whereNumber('review')->name('evidence.store');
+        Route::get('/evidence/{evidence}', [PerformanceController::class, 'evidenceDownload'])->whereNumber('evidence')->name('evidence.download');
+    });
+    Route::prefix('attendance')->name('attendance.')->group(function () {
+        Route::get('/', [AttendanceController::class, 'index'])->name('index');
+        Route::post('/clock-in', [AttendanceController::class, 'clockIn'])->name('clock-in');
+        Route::post('/clock-out', [AttendanceController::class, 'clockOut'])->name('clock-out');
+        Route::post('/records', [AttendanceController::class, 'recordStore'])->name('records.store');
+        Route::post('/shifts', [AttendanceController::class, 'shiftStore'])->name('shifts.store');
+        Route::post('/leave-types', [AttendanceController::class, 'leaveTypeStore'])->name('leave-types.store');
+        Route::post('/leave-balances', [AttendanceController::class, 'leaveBalanceStore'])->name('leave-balances.store');
+        Route::post('/leave-requests', [AttendanceController::class, 'leaveRequestStore'])->name('leave-requests.store');
+        Route::put('/leave-requests/{leaveRequest}', [AttendanceController::class, 'leaveRequestUpdate'])->whereNumber('leaveRequest')->name('leave-requests.update');
+        Route::post('/holidays', [AttendanceController::class, 'holidayStore'])->name('holidays.store');
+        Route::post('/timesheets', [AttendanceController::class, 'timesheetStore'])->name('timesheets.store');
+        Route::put('/timesheets/{timesheet}', [AttendanceController::class, 'timesheetUpdate'])->whereNumber('timesheet')->name('timesheets.update');
+    });
     Route::prefix('tickets')->name('tickets.')->group(function () {
         Route::get('/', [TicketController::class, 'index'])->name('index');
         Route::get('/create', [TicketController::class, 'create'])->name('create');
@@ -67,6 +129,33 @@ Route::middleware('auth')->group(function () {
         Route::post('/send', [SmsController::class, 'send'])->middleware('throttle:20,1')->name('send');
         Route::post('/campaigns', [SmsController::class, 'campaign'])->middleware('throttle:5,1')->name('campaigns.store');
         Route::post('/messages/{message}/retry', [SmsController::class, 'retry'])->whereNumber('message')->middleware('throttle:5,1')->name('messages.retry');
+    });
+    Route::prefix('marketing')->name('marketing.')->group(function () {
+        Route::get('/', [MarketingController::class, 'index'])->name('index');
+        Route::post('/campaigns', [MarketingController::class, 'storeCampaign'])->name('campaigns.store');
+        Route::get('/campaigns/{campaign}', [MarketingController::class, 'show'])->whereNumber('campaign')->name('campaigns.show');
+        Route::put('/campaigns/{campaign}', [MarketingController::class, 'updateCampaign'])->whereNumber('campaign')->name('campaigns.update');
+        Route::post('/campaigns/{campaign}/tasks', [MarketingController::class, 'task'])->whereNumber('campaign')->name('tasks.store');
+        Route::put('/tasks/{task}/complete', [MarketingController::class, 'completeTask'])->whereNumber('task')->name('tasks.complete');
+        Route::post('/landing-pages', [MarketingController::class, 'landingPage'])->name('landing-pages.store');
+        Route::post('/affiliates', [MarketingController::class, 'affiliate'])->name('affiliates.store');
+        Route::post('/consents', [MarketingController::class, 'consent'])->name('consents.store');
+    });
+    Route::prefix('hr')->name('hr.')->group(function () {
+        Route::get('/', [HrController::class, 'index'])->name('index');
+        Route::post('/employees', [HrController::class, 'store'])->name('employees.store');
+        Route::get('/employees/{employee}', [HrController::class, 'show'])->whereNumber('employee')->name('employees.show');
+        Route::put('/employees/{employee}', [HrController::class, 'update'])->whereNumber('employee')->name('employees.update');
+        Route::post('/employees/{employee}/contracts', [HrController::class, 'contract'])->whereNumber('employee')->name('contracts.store');
+        Route::put('/contracts/{contract}', [HrController::class, 'contractUpdate'])->whereNumber('contract')->name('contracts.update');
+        Route::post('/employees/{employee}/documents', [HrController::class, 'document'])->whereNumber('employee')->name('documents.store');
+        Route::get('/documents/{document}', [HrController::class, 'download'])->whereNumber('document')->name('documents.download');
+        Route::post('/employees/{employee}/lifecycle-tasks', [HrController::class, 'task'])->whereNumber('employee')->name('tasks.store');
+        Route::put('/lifecycle-tasks/{task}/toggle', [HrController::class, 'taskToggle'])->whereNumber('task')->name('tasks.toggle');
+        Route::post('/employees/{employee}/cases', [HrController::class, 'caseStore'])->whereNumber('employee')->name('cases.store');
+        Route::put('/cases/{case}', [HrController::class, 'caseUpdate'])->whereNumber('case')->name('cases.update');
+        Route::post('/training-courses', [HrController::class, 'trainingCourse'])->name('training-courses.store');
+        Route::post('/employees/{employee}/training', [HrController::class, 'trainingRecord'])->whereNumber('employee')->name('training.store');
     });
     Route::get('/leads/import', [LeadController::class, 'importPage'])->name('leads.import');
     Route::post('/leads/import/preview', [LeadController::class, 'importPreview'])->name('leads.import.preview');

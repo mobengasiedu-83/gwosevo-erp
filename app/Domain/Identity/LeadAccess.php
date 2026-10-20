@@ -17,7 +17,7 @@ class LeadAccess
         if (! $user->isActive() || ! $organizationId) {
             return $query->whereRaw('1 = 0');
         }
-        if ($user->hasRole('Administrator')) {
+        if ($user->isSuperAdmin()) {
             return $query;
         }
         $membership = $user->organizations()->whereKey($organizationId)->first()?->pivot;

@@ -41,7 +41,8 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('identity-security', fn ($request) => Limit::perMinute(30)->by((string) ($request->user()?->id ?? $request->ip())));
         RateLimiter::for('identity-mfa', fn ($request) => Limit::perMinute(6)->by(($request->user()?->id ?? $request->session()->get('identity.pending.user_id', 'guest')).'|'.$request->ip()));
         RateLimiter::for('pbx-events', fn ($request) => Limit::perMinute(120)->by((string) ($request->route('connection') ?? $request->ip())));
-        Gate::define('administer-system', fn (User $user) => $user->isActive() && $user->hasRole('Administrator'));
+        Gate::before(fn (User $user) => $user->hasAnyRole(['Super Admin', 'Superadmin', 'Administrator']) ? $user->isActive() : null);
+        Gate::define('administer-system', fn (User $user) => $user->isSuperAdmin());
         View::composer('*', function ($view) {
             $view->with('erpSettings', app(Settings::class));
             $view->with('erpModules', app(Modules::class));
