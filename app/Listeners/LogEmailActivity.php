@@ -35,10 +35,13 @@ class LogEmailActivity
             // Failure logging must not interfere with notification error handling.
         }
 
+        $exception = $event->data['exception'] ?? null;
+
         Log::channel('email')->error('Email notification failed.', [
             'notification' => $event->notification::class,
             'recipient' => $this->normalizeRecipients($recipient),
-            'exception' => isset($event->data['exception']) ? $event->data['exception']::class : null,
+            'exception' => $exception instanceof \Throwable ? $exception::class : null,
+            'reason' => $this->safeExceptionMessage($exception),
         ]);
     }
 
@@ -69,5 +72,21 @@ class LogEmailActivity
         }
 
         return [];
+    }
+
+    private function safeExceptionMessage(mixed $exception): ?string
+    {
+        if (! $exception instanceof \Throwable) {
+            return null;
+        }
+
+        $message = mb_substr($exception->getMessage(), 0, 500);
+        foreach ([config('mail.mailers.smtp.username'), config('mail.mailers.smtp.password')] as $secret) {
+            if (is_string($secret) && $secret !== '') {
+                $message = str_replace($secret, '[redacted]', $message);
+            }
+        }
+
+        return preg_replace('/(password|passwd|token|authorization)\s*[:=]\s*[^\s,;]+/i', '$1=[redacted]', $message);
     }
 }
