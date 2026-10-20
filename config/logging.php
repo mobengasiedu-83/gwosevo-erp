@@ -83,6 +83,15 @@ return [
             'replace_placeholders' => true,
         ],
 
+        'integrations' => [
+            'driver' => 'single',
+            'path' => storage_path('logs/integrations.log'),
+            'level' => env('INTEGRATIONS_LOG_LEVEL', 'info'),
+            'permission' => 0600,
+            'locking' => true,
+            'replace_placeholders' => true,
+        ],
+
         'daily' => [
             'driver' => 'daily',
             'path' => storage_path('logs/laravel.log'),

@@ -85,6 +85,15 @@ class WorkspaceNavigation
         if (app(Modules::class)->enabled('reports') && ($user->isSuperAdmin() || $user->canAny(['reports.dashboard.view', 'reports.custom.manage', 'reports.kpis.manage', 'reports.schedules.manage', 'leads.reports.view', 'opportunities.reports.view', 'calls.view', 'tickets.reports', 'hr.reports.view', 'attendance.reports.view', 'recruitment.reports.view', 'performance.reports.view', 'finance.reports.view', 'projects.reports.view']))) {
             $groups['Workspace'][] = ['label' => 'Reports & Insights', 'route' => 'reports.index', 'match' => 'reports.*', 'icon' => 'chart'];
         }
+        if (app(Modules::class)->enabled('automation') && ($user->isSuperAdmin() || $user->canAny(['automation.view', 'automation.approve', 'automation.manage']))) {
+            $groups['Notifications & Automation'] = [['label' => 'Notification Centre', 'route' => 'automation.index', 'match' => 'automation.*', 'icon' => 'activity']];
+        }
+        if (app(Modules::class)->enabled('integrations') && ($user->isSuperAdmin() || $user->canAny(['integrations.view', 'integrations.manage', 'integrations.tokens.manage', 'integrations.health.check']))) {
+            $groups['Integrations & APIs'] = [['label' => 'Integration Registry', 'route' => 'integrations.index', 'match' => 'integrations.*', 'icon' => 'key']];
+        }
+        if (app(Modules::class)->enabled('security') && ($user->isSuperAdmin() || $user->canAny(['security.view', 'security.manage', 'security.incidents.manage', 'security.backups.manage', 'security.retention.manage']))) {
+            $groups['Security & Compliance'] = [['label' => 'Security Centre', 'route' => 'security-center.index', 'match' => 'security-center.*', 'icon' => 'shield']];
+        }
         $groups['Administration'] = [
             ['label' => 'Organization structure', 'route' => 'structure.index', 'match' => 'structure.*', 'icon' => 'users'],
             ['label' => 'Access reviews', 'route' => 'identity.reviews.index', 'match' => 'identity.reviews.*', 'icon' => 'file'],
@@ -119,7 +128,7 @@ class WorkspaceNavigation
             }
         }
 
-        $order = ['Workspace', 'Commercial & CRM', 'Customer Experience', 'Human Resources', 'Operations & Projects', 'Finance', 'Knowledge & Intelligence', 'Administration'];
+        $order = ['Workspace', 'Commercial & CRM', 'Customer Experience', 'Human Resources', 'Operations & Projects', 'Finance', 'Notifications & Automation', 'Integrations & APIs', 'Security & Compliance', 'Knowledge & Intelligence', 'Administration'];
         $orderedGroups = [];
 
         foreach ($order as $group) {

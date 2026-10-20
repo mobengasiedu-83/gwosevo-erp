@@ -13,10 +13,17 @@ use App\Models\PbxConnection;
 use App\Models\SystemSetting;
 use App\Models\User;
 use App\Models\SmsCampaign;
+use App\Models\SmsConsent;
+use App\Models\SmsMessage;
+use App\Models\HrEmployee;
 use App\Jobs\SendSmsMessage;
+use App\Notifications\AutomationNotification;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schedule;
 
@@ -40,6 +47,75 @@ Artisan::command('sms:dispatch-scheduled', function () {
 })->purpose('Queue due SMS campaigns');
 
 Schedule::command('sms:dispatch-scheduled')->everyMinute()->withoutOverlapping();
+
+Artisan::command('automation:send-reminders', function () {
+    $sent = 0;
+    DB::table('automation_approval_requests')->where('status', 'pending')->whereNotNull('due_at')->where('due_at', '<=', now())
+        ->where(fn ($query) => $query->whereNull('last_reminded_at')->orWhere('last_reminded_at', '<=', now()->subDay()))
+        ->orderBy('id')->chunkById(100, function ($requests) use (&$sent) {
+            foreach ($requests as $request) {
+                $steps = DB::table('automation_approval_steps')->where('request_id', $request->id)->where('stage', $request->current_stage)->where('status', 'pending')->get();
+                $rules = DB::table('automation_rules')->where('organization_id', $request->organization_id)->where('event_key', 'approval.overdue')->where('is_active', true)->get();
+                $matchingRules = collect($rules)->filter(function ($rule) use ($request) {
+                    if (! $rule->condition_field) return true;
+                    $actual = (string) ($request->{$rule->condition_field} ?? '');
+                    $expected = (string) ($rule->condition_value ?? '');
+                    return match ($rule->condition_operator) {
+                        'not_equals' => $actual !== $expected,
+                        'contains' => str_contains(mb_strtolower($actual), mb_strtolower($expected)),
+                        default => $actual === $expected,
+                    };
+                });
+                $recipients = $matchingRules->isEmpty() ? $steps->pluck('approver_id')->all() : $matchingRules->flatMap(fn ($rule) => $rule->action === 'notify_requester' ? [$request->requested_by] : $steps->pluck('approver_id')->all())->all();
+                foreach (array_unique($recipients) as $userId) {
+                    $user = User::find($userId);
+                    if (! $user) continue;
+                    $preference = DB::table('automation_preferences')->where('organization_id', $request->organization_id)->where('user_id', $userId)->where('event_key', 'automation.reminder')->first();
+                    $inApp = $preference?->in_app ?? true;
+                    $email = $preference?->email ?? false;
+                    $body = 'Approval “'.$request->title.'” is overdue. Please review it in the ERP.';
+                    if ($inApp) {
+                        $user->notify(new AutomationNotification('Approval overdue', $body, route('automation.index'), 'automation.reminder', $request->organization_id));
+                        DB::table('automation_delivery_logs')->insert(['organization_id' => $request->organization_id, 'user_id' => $userId, 'event_key' => 'automation.reminder', 'channel' => 'in_app', 'recipient' => $user->email, 'status' => 'sent', 'attempts' => 1, 'metadata' => json_encode(['approval_request_id' => $request->id]), 'sent_at' => now(), 'created_at' => now(), 'updated_at' => now()]);
+                        $sent++;
+                    }
+                    if ($email) {
+                        try {
+                            Mail::raw($body.' '.route('automation.index'), fn ($mail) => $mail->to($user->email)->subject('Approval overdue: '.$request->title));
+                            $status = 'sent'; $failure = null;
+                        } catch (Throwable $exception) {
+                            $status = 'failed'; $failure = mb_substr($exception->getMessage(), 0, 1000);
+                        }
+                        DB::table('automation_delivery_logs')->insert(['organization_id' => $request->organization_id, 'user_id' => $userId, 'event_key' => 'automation.reminder', 'channel' => 'email', 'recipient' => $user->email, 'status' => $status, 'attempts' => 1, 'failure_reason' => $failure, 'metadata' => json_encode(['approval_request_id' => $request->id]), 'sent_at' => $status === 'sent' ? now() : null, 'created_at' => now(), 'updated_at' => now()]);
+                        if ($status === 'sent') $sent++;
+                    }
+                    if (($preference?->sms ?? false)) {
+                        $phone = HrEmployee::query()->where('organization_id', $request->organization_id)->where('user_id', $userId)->value('work_phone');
+                        $phone = $phone ? preg_replace('/[^0-9+]/', '', $phone) : null;
+                        $configured = filled(config('services.txtconnect.key')) && filled(config('services.txtconnect.sender')) && str_starts_with((string) config('services.txtconnect.base_url'), 'https://');
+                        $consented = $phone && SmsConsent::query()->where('organization_id', $request->organization_id)->where('phone', $phone)->where('status', 'opted_in')->exists();
+                        if (! $configured || ! $phone || ! $consented || ! app(\App\Domain\Administration\Modules::class)->enabled('sms')) {
+                            $status = 'failed'; $failure = 'SMS needs a work phone, active TXTConnect configuration, enabled SMS module, and current opt-in consent.';
+                        } else {
+                            try {
+                                $message = SmsMessage::create(['organization_id' => $request->organization_id, 'to' => $phone, 'sender' => config('services.txtconnect.sender'), 'body' => mb_substr($body, 0, 1600), 'status' => 'queued', 'idempotency_key' => (string) Str::uuid(), 'created_by' => null]);
+                                SendSmsMessage::dispatch($message->id)->onQueue('sms');
+                                $status = 'queued'; $failure = null;
+                            } catch (Throwable $exception) {
+                                $status = 'failed'; $failure = mb_substr($exception->getMessage(), 0, 1000);
+                            }
+                        }
+                        DB::table('automation_delivery_logs')->insert(['organization_id' => $request->organization_id, 'user_id' => $userId, 'event_key' => 'automation.reminder', 'channel' => 'sms', 'recipient' => $phone, 'status' => $status, 'attempts' => 1, 'failure_reason' => $failure, 'metadata' => json_encode(['approval_request_id' => $request->id]), 'sent_at' => $status === 'queued' ? now() : null, 'created_at' => now(), 'updated_at' => now()]);
+                        if ($status === 'queued') $sent++;
+                    }
+                }
+                DB::table('automation_approval_requests')->where('id', $request->id)->update(['last_reminded_at' => now(), 'updated_at' => now()]);
+            }
+        });
+    $this->info("Sent {$sent} approval reminder(s).");
+})->purpose('Send reminders for overdue approval requests');
+
+Schedule::command('automation:send-reminders')->hourly()->withoutOverlapping();
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
@@ -155,3 +231,37 @@ Artisan::command('finance:generate-recurring', function (FinanceService $finance
 })->purpose('Generate due recurring finance invoices');
 
 Schedule::command('finance:generate-recurring')->daily()->withoutOverlapping();
+
+Artisan::command('security:prune-retained-data {--apply : Permanently delete eligible records} {--force : Skip the interactive confirmation}', function () {
+    $targets = ['audit_events' => 'created_at', 'login_events' => 'created_at', 'integration_health_logs' => 'checked_at', 'failed_jobs' => 'failed_at'];
+    $policies = DB::table('security_retention_policies')->whereNull('organization_id')->where('enabled', true)->orderBy('category')->get();
+    if ($policies->isEmpty()) {
+        $this->info('No retention policies are enabled. No records were changed.');
+        return self::SUCCESS;
+    }
+    $plan = [];
+    foreach ($policies as $policy) {
+        if (! isset($targets[$policy->category])) {
+            $this->warn("Skipping unsupported retention category: {$policy->category}");
+            continue;
+        }
+        $cutoff = now()->subDays((int) $policy->retention_days);
+        $count = DB::table($policy->category)->where($targets[$policy->category], '<', $cutoff)->count();
+        $plan[] = [$policy->category, (int) $policy->retention_days, $count, $cutoff];
+    }
+    $this->table(['Category', 'Keep days', 'Eligible rows', 'Cutoff'], array_map(fn ($row) => [$row[0], $row[1], $row[2], $row[3]->toDateTimeString()], $plan));
+    if (! $this->option('apply')) {
+        $this->info('Preview only. Add --apply to delete these records.');
+        return self::SUCCESS;
+    }
+    if (! $this->option('force') && ! $this->confirm('Permanently delete the eligible records shown above?')) {
+        $this->warn('No records were changed.');
+        return self::SUCCESS;
+    }
+    foreach ($plan as [$category, $days, $count, $cutoff]) {
+        $deleted = DB::table($category)->where($targets[$category], '<', $cutoff)->delete();
+        DB::table('security_retention_runs')->insert(['category' => $category, 'deleted_rows' => $deleted, 'cutoff_at' => $cutoff, 'run_at' => now(), 'run_by' => get_current_user() ?: 'cli']);
+        Log::channel('daily')->notice('Security retention purge completed.', ['category' => $category, 'deleted_rows' => $deleted, 'cutoff_at' => $cutoff->toIso8601String()]);
+        $this->info("{$category}: {$deleted} row(s) deleted.");
+    }
+})->purpose('Preview or manually purge expired audit and operational records under enabled retention policies');

@@ -2,7 +2,7 @@
 
 **Edition:** 20 October 2026. [Return to the user guide](README.md).
 
-The feature tables below reproduce the supplied Module Feature Breakdown as a requirements reference. Modules 01–19 are installed within the boundaries explained in the user guide. Modules 20–22 are planned.
+The feature tables below reproduce the supplied Module Feature Breakdown as a requirements reference. Modules 01–22 are installed within the boundaries explained in the user guide.
 
 ## Module 01 System Administration & Configuration
 
@@ -454,7 +454,7 @@ See [Module 05 setup and user guide](../module-five.md). The specifications requ
 
 ## Module 20 Notifications, Approvals & Automation
 
-**Status:** Planned — not installed. No operational screens or end-to-end user procedures are available yet.
+**Status:** Installed locally. Organization-scoped notification centre, channel preferences, templates, approval workflows and requests, sequential approval stages, time-bound delegation support, overdue reminders, rules and delivery history are available.
 
 **Purpose:** Standardize events, routing and business decisions.
 
@@ -475,11 +475,15 @@ See [Module 05 setup and user guide](../module-five.md). The specifications requ
 | Delivery Logs | Attempts, failure and retries |
 | Audit | Decision history and timestamps |
 
-**Before operational use:** approve the provider interface, event mapping, lawful recording policy and role assignments; configure the encrypted connection profile and signing secret; then verify events against the provider.
+**Operational boundaries:** in-app alerts are stored in Laravel notifications. Email and SMS are sent only when a user explicitly enables those channels for an event. SMS also requires an enabled SMS module, configured TXTConnect credentials, an employee work phone and active opt-in consent. Email delivery follows the configured Laravel mail transport. Scheduled approval reminders run hourly when the Laravel scheduler is active. Reminder rules currently cover overdue approvals and notify the current approvers; a configured requester action can also notify the requester. Templates use `{user_name}`, `{event_title}` and `{approval_url}`. Delivery attempts appear in this module's log and SMS attempts also appear in `storage/logs/sms.log`.
+
+**Install:** run the Module 20 migration and register its permissions with the identity seeder. In production, also run `php artisan optimize:clear`, keep the normal queue worker active for SMS and configure the Laravel scheduler. Only users with `automation.manage` can create workflows, templates and rules. Assign `automation.view` to staff who need the centre and `automation.approve` to approvers. Administrators have all permissions.
+
+**Approval behavior:** workflows contain up to eight sequential stages; every selected approver within a stage must approve before the next stage opens. Any rejection closes the request. A requester cannot also be selected as an approver. Active approval delegations are honored when the selected approver delegates authority for the same organization. Requests are a generic tracking workflow and do not automatically update another module's underlying business record; existing module-specific approval actions remain authoritative.
 
 ## Module 21 Integration & API Management
 
-**Status:** Planned — not installed. No operational screens or end-to-end user procedures are available yet.
+**Status:** Installed locally. See the [Module 21 integration and API guide](../module-twenty-one.md). The registry, scoped Sanctum tokens, provider-specific read-only health checks, health history and correlation logging are available.
 
 **Purpose:** Govern secure connections with external systems.
 
@@ -500,11 +504,13 @@ See [Module 05 setup and user guide](../module-five.md). The specifications requ
 | Recovery | Backoff, idempotency and dead letters |
 | Health | Connectivity and service status |
 
-**Before operational use:** approve the provider interface, event mapping, lawful recording policy and role assignments; configure the encrypted connection profile and signing secret; then verify events against the provider.
+**Boundaries:** this module does not store provider secrets or replace the existing `.env` and module profile configuration. Generic webhook authoring, USSD operations, provider delivery receipts, universal secret rotation, automatic retries/idempotency/dead letters and queue monitoring remain unimplemented pending approved provider protocols and operational policies. See the Module 21 guide for the probes and supported API scopes.
+
+**Before operational use:** assign the integration permissions, store credentials only in their existing protected provider configuration, verify endpoint access with a read-only check, issue minimal-scope API tokens to named owners, and confirm provider-side key rotation and revocation procedures.
 
 ## Module 22 Security, Audit, Backup & Monitoring
 
-**Status:** Planned — not installed. No operational screens or end-to-end user procedures are available yet.
+**Status:** Installed locally. See the [Module 22 security and continuity guide](../module-twenty-two.md). The Security Centre provides health indicators, scoped audit/authentication history, incident tracking, backup/restore evidence, classification labels, rotation schedules and preview-first manual retention controls.
 
 **Purpose:** Protect ERP data and assure service continuity.
 
@@ -525,4 +531,6 @@ See [Module 05 setup and user guide](../module-five.md). The specifications requ
 | Disaster Recovery | RPO/RTO and restoration |
 | Compliance | Privacy and access reviews |
 
-**Before operational use:** approve the provider interface, event mapping, lawful recording policy and role assignments; configure the encrypted connection profile and signing secret; then verify events against the provider.
+**Boundaries:** the ERP does not create or restore backup files, continuously monitor infrastructure, rotate external provider credentials, enforce classification labels in place of module permissions, purge automatically, or set legal retention periods. Retention applies only to the supported database categories and requires an explicit operator run. File-log rotation and backup/restore remain host responsibilities. See the Module 22 guide for permissions, command use and retention safety.
+
+**Before operational use:** assign security permissions to approved operators, agree data classifications and retention periods with business owners, configure secure database/files/configuration backups, test restoration in an isolated environment, define RPO/RTO and incident-response ownership, and keep host log rotation and continuous monitoring enabled.

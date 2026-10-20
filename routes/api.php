@@ -9,10 +9,10 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
-})->middleware(['auth:sanctum', ActiveApiUser::class]);
+})->middleware(['auth:sanctum', ActiveApiUser::class, 'abilities:profile:read', 'throttle:60,1']);
 
 Route::post('/v1/leads/capture/{organization:code}', [LeadCaptureController::class, 'website'])->middleware('throttle:crm-lead-capture')->name('api.leads.capture.website');
-Route::middleware(['auth:sanctum', ActiveApiUser::class])->post('/v1/leads', [LeadCaptureController::class, 'api'])->name('api.leads.store');
-Route::middleware(['auth:sanctum', ActiveApiUser::class])->post('/v1/tickets', [TicketController::class, 'apiCreate'])->middleware('throttle:30,1')->name('api.tickets.store');
-Route::middleware(['auth:sanctum', ActiveApiUser::class])->post('/v1/tickets/{ticket}/replies', [TicketController::class, 'apiReply'])->middleware('throttle:30,1')->whereNumber('ticket')->name('api.tickets.replies.store');
+Route::middleware(['auth:sanctum', ActiveApiUser::class, 'abilities:leads:create'])->post('/v1/leads', [LeadCaptureController::class, 'api'])->middleware('throttle:30,1')->name('api.leads.store');
+Route::middleware(['auth:sanctum', ActiveApiUser::class, 'abilities:tickets:create'])->post('/v1/tickets', [TicketController::class, 'apiCreate'])->middleware('throttle:30,1')->name('api.tickets.store');
+Route::middleware(['auth:sanctum', ActiveApiUser::class, 'abilities:tickets:reply'])->post('/v1/tickets/{ticket}/replies', [TicketController::class, 'apiReply'])->middleware('throttle:30,1')->whereNumber('ticket')->name('api.tickets.replies.store');
 Route::post('/v1/pbx/{connection}/events', [ContactCentreController::class, 'webhook'])->middleware('throttle:pbx-events')->name('api.pbx.events');

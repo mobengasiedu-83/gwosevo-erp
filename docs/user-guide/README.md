@@ -3,7 +3,7 @@
 **Edition:** 20 October 2026 · **Audience:** staff, supervisors, reviewers and administrators
 **Application:** <https://localhost/gwosevo-erp/public/>
 
-This guide describes the application currently installed in this repository. Modules 01–19 are installed within the commissioning boundaries described here. Modules 20–22 remain planned. Their feature catalogue is included in the [module roadmap](module-roadmap.md). See the [Module 18 knowledge bank guide](../module-eighteen.md) and [Module 19 reporting guide](../module-nineteen.md) for setup and integration boundaries.
+This guide describes the application currently installed in this repository. Modules 01–22 are installed within the commissioning boundaries described here. Their feature catalogue is included in the [module roadmap](module-roadmap.md). See the [Module 18 knowledge bank guide](../module-eighteen.md), [Module 19 reporting guide](../module-nineteen.md), [Module 20 notifications and approvals guide](../module-twenty.md), [Module 21 integration and API guide](../module-twenty-one.md), and [Module 22 security and continuity guide](../module-twenty-two.md) for setup and operational boundaries.
 
 The names “superadmin” and “Administrator” refer here to the existing Administrator account/role. This guide contains no account passwords, invitation tokens or integration secrets.
 
@@ -27,11 +27,14 @@ The names “superadmin” and “Administrator” refer here to the existing Ad
 15. [Module 17 — Procurement, assets and inventory](#module-17--procurement-assets-and-inventory)
 16. [Module 18 — Knowledge bank and AI search](#module-18--knowledge-bank-and-ai-search)
 17. [Module 19 — Reports, dashboards and business intelligence](#module-19--reports-dashboards-and-business-intelligence)
-18. [Daily and periodic routines](#daily-and-periodic-routines)
-19. [Troubleshooting](#troubleshooting)
-20. [Administrator setup checklist](#administrator-setup-checklist)
-21. [Glossary](#glossary)
-22. [Technical and commissioning notes](#technical-and-commissioning-notes)
+18. [Module 20 — Notifications, approvals and automation](../module-twenty.md)
+19. [Module 21 — Integration and API management](../module-twenty-one.md)
+20. [Module 22 — Security, audit, backup and monitoring](../module-twenty-two.md)
+21. [Daily and periodic routines](#daily-and-periodic-routines)
+22. [Troubleshooting](#troubleshooting)
+23. [Administrator setup checklist](#administrator-setup-checklist)
+24. [Glossary](#glossary)
+25. [Technical and commissioning notes](#technical-and-commissioning-notes)
 
 
 ## Getting started and navigation
@@ -608,17 +611,9 @@ Create a knowledge space, write an article, and submit it for review. A differen
 
 Custom reports support approved fields, grouping, measures and filters. CSV files open in spreadsheet applications; native XLSX is not included. Browser print can save a PDF. Schedule definitions can be saved and paused, but automated scheduled email delivery is inactive pending approval for sending cross-module report data outside the ERP.
 
-## Modules 20–22 — Planned capabilities
+## Modules 20–22 — Cross-cutting operations
 
-These modules do not yet have operational screens in this installation. The [complete module roadmap](module-roadmap.md) lists every specified module and feature, including the distinction between current foundations and future work.
-
-| Module | Planned area |
-| --- | --- |
-| 20 | Notifications, approvals and automation |
-| 21 | Integration and API management |
-| 22 | Security, audit, backup and monitoring |
-
-Detailed operational procedures for these modules must be written against their implemented screens and verified behavior when installed.
+Modules 20–22 are installed locally. Follow their respective [Module 20](../module-twenty.md), [Module 21](../module-twenty-one.md), and [Module 22](../module-twenty-two.md) guides for enabled features and boundaries. Backup creation/restoration, continuous host monitoring and approved retention policy remain operator responsibilities.
 
 ## Daily and periodic routines
 

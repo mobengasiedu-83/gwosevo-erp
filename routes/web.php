@@ -22,6 +22,9 @@ use App\Http\Controllers\FinanceController;
 use App\Http\Controllers\ProcurementController;
 use App\Http\Controllers\KnowledgeController;
 use App\Http\Controllers\ReportsController;
+use App\Http\Controllers\AutomationController;
+use App\Http\Controllers\IntegrationController;
+use App\Http\Controllers\SecurityCentreController;
 use App\Models\SalesPipelineStage;
 use App\Http\Controllers\CRM\LeadAssignmentRulesController;
 use App\Http\Controllers\CRM\LeadNotificationController;
@@ -61,6 +64,35 @@ Route::middleware('auth')->group(function () {
         Route::delete('/schedules/{schedule}', [ReportsController::class, 'deleteSchedule'])->whereNumber('schedule')->name('schedules.delete');
     });
     Route::get('/overview/{group}', GroupOverviewController::class)->whereIn('group', ['commercial', 'customer-experience', 'human-resources', 'operations-projects'])->name('group-overviews.show');
+    Route::prefix('automation')->name('automation.')->group(function () {
+        Route::get('/', [AutomationController::class, 'index'])->name('index');
+        Route::post('/notifications/{notification}/read', [AutomationController::class, 'markRead'])->name('notifications.read');
+        Route::post('/workflows', [AutomationController::class, 'workflowStore'])->name('workflows.store');
+        Route::post('/requests', [AutomationController::class, 'requestStore'])->name('requests.store');
+        Route::post('/steps/{step}/decision', [AutomationController::class, 'decide'])->whereNumber('step')->name('steps.decide');
+        Route::post('/preferences', [AutomationController::class, 'preferenceSave'])->name('preferences.store');
+        Route::post('/templates', [AutomationController::class, 'templateStore'])->name('templates.store');
+        Route::post('/rules', [AutomationController::class, 'ruleStore'])->name('rules.store');
+    });
+    Route::prefix('integrations')->name('integrations.')->group(function () {
+        Route::get('/', [IntegrationController::class, 'index'])->name('index');
+        Route::post('/registry', [IntegrationController::class, 'store'])->name('registry.store');
+        Route::put('/registry/{registry}/status', [IntegrationController::class, 'status'])->whereNumber('registry')->name('registry.status');
+        Route::post('/health-check', [IntegrationController::class, 'health'])->middleware('throttle:6,1')->name('health');
+        Route::post('/api-tokens', [IntegrationController::class, 'tokenStore'])->middleware('throttle:6,1')->name('tokens.store');
+        Route::delete('/api-tokens/{token}', [IntegrationController::class, 'tokenRevoke'])->whereNumber('token')->name('tokens.revoke');
+    });
+    Route::prefix('security-centre')->name('security-center.')->group(function () {
+        Route::get('/', [SecurityCentreController::class, 'index'])->name('index');
+        Route::post('/incidents', [SecurityCentreController::class, 'incidentStore'])->middleware('throttle:10,1')->name('incidents.store');
+        Route::put('/incidents/{incident}', [SecurityCentreController::class, 'incidentUpdate'])->whereNumber('incident')->name('incidents.update');
+        Route::post('/backups', [SecurityCentreController::class, 'backupStore'])->middleware('throttle:10,1')->name('backups.store');
+        Route::put('/backups/{backup}/restore-test', [SecurityCentreController::class, 'backupVerify'])->whereNumber('backup')->name('backups.verify');
+        Route::put('/retention/{policy}', [SecurityCentreController::class, 'retentionUpdate'])->whereNumber('policy')->name('retention.update');
+        Route::put('/classifications/{classification}', [SecurityCentreController::class, 'classificationUpdate'])->whereNumber('classification')->name('classifications.update');
+        Route::post('/rotations', [SecurityCentreController::class, 'rotationStore'])->middleware('throttle:10,1')->name('rotations.store');
+        Route::put('/recovery-plan', [SecurityCentreController::class, 'recoveryPlanSave'])->name('recovery-plan.update');
+    });
     Route::prefix('knowledge')->name('knowledge.')->group(function () {
         Route::get('/', [KnowledgeController::class, 'index'])->name('index');
         Route::get('/analytics', [KnowledgeController::class, 'analytics'])->name('analytics');
