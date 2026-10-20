@@ -9,6 +9,7 @@ use App\Http\Controllers\Sales\OpportunityController;
 use App\Http\Controllers\Sales\SalesNotificationController;
 use App\Http\Controllers\Commercial\CommercialController;
 use App\Http\Controllers\ContactCentreController;
+use App\Http\Controllers\Support\TicketController;
 use App\Models\SalesPipelineStage;
 use App\Http\Controllers\CRM\LeadAssignmentRulesController;
 use App\Http\Controllers\CRM\LeadNotificationController;
@@ -16,6 +17,12 @@ use App\Http\Middleware\AdministrationAccess;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn () => redirect()->route('dashboard'));
+Route::get('/support/submit/{organization:code}', [TicketController::class, 'portalForm'])->name('support.portal.create');
+Route::post('/support/submit/{organization:code}', [TicketController::class, 'portalCreate'])->middleware('throttle:10,1')->name('support.portal.store');
+Route::get('/support/portal/{token}', [TicketController::class, 'portalShow'])->where('token', '[A-Za-z0-9]{64}')->name('support.portal.show');
+Route::post('/support/portal/{token}/replies', [TicketController::class, 'portalReply'])->middleware('throttle:10,1')->where('token', '[A-Za-z0-9]{64}')->name('support.portal.reply');
+Route::post('/support/portal/{token}/satisfaction', [TicketController::class, 'satisfaction'])->middleware('throttle:5,1')->where('token', '[A-Za-z0-9]{64}')->name('support.portal.satisfaction');
+Route::get('/support/portal/{token}/attachments/{attachment}', [TicketController::class, 'portalAttachment'])->where('token', '[A-Za-z0-9]{64}')->whereNumber('attachment')->name('support.portal.attachments.show');
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');
     Route::post('/login', [AuthenticatedSessionController::class, 'store'])->middleware('throttle:6,1');
@@ -23,6 +30,19 @@ Route::middleware('guest')->group(function () {
 Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
+    Route::prefix('tickets')->name('tickets.')->group(function () {
+        Route::get('/', [TicketController::class, 'index'])->name('index');
+        Route::get('/create', [TicketController::class, 'create'])->name('create');
+        Route::post('/', [TicketController::class, 'store'])->name('store');
+        Route::get('/{ticket}', [TicketController::class, 'show'])->whereNumber('ticket')->name('show');
+        Route::post('/{ticket}/replies', [TicketController::class, 'reply'])->whereNumber('ticket')->name('replies.store');
+        Route::put('/{ticket}/assignment', [TicketController::class, 'assign'])->whereNumber('ticket')->name('assignment.update');
+        Route::put('/{ticket}/status', [TicketController::class, 'transition'])->whereNumber('ticket')->name('status.update');
+        Route::get('/attachments/{attachment}', [TicketController::class, 'attachment'])->whereNumber('attachment')->name('attachments.show');
+        Route::post('/categories', [TicketController::class, 'saveCategory'])->name('categories.store');
+        Route::put('/categories/{category}', [TicketController::class, 'toggleCategory'])->whereNumber('category')->name('categories.update');
+        Route::post('/sla-policies', [TicketController::class, 'saveSla'])->name('sla.store');
+    });
     Route::post('/lead-notifications/{notification}/read', [LeadNotificationController::class, 'read'])->name('lead-notifications.read');
     Route::post('/sales-notifications/{notification}/read', [SalesNotificationController::class, 'read'])->name('sales-notifications.read');
     Route::prefix('contact-centre')->name('contact-centre.')->group(function () {

@@ -1,8 +1,8 @@
 # GWO SEVO ERP — Complete Module Catalogue and Roadmap
 
-**Edition:** 19 October 2026. [Return to the user guide](README.md).
+**Edition:** 20 October 2026. [Return to the user guide](README.md).
 
-The feature tables below reproduce the supplied Module Feature Breakdown as a requirements reference. Modules 01–07 are installed within the boundaries explained in the user guide. Modules 08–22 are planned. No future-module procedures are fabricated.
+The feature tables below reproduce the supplied Module Feature Breakdown as a requirements reference. Modules 01–08 are installed within the boundaries explained in the user guide. Modules 09–22 are planned. No future-module procedures are fabricated.
 
 ## Module 01 System Administration & Configuration
 
@@ -160,7 +160,7 @@ See [Module 05 setup and user guide](../module-five.md). The specifications requ
 
 ## Module 08 Customer Support & Ticketing
 
-**Status:** Planned — not installed. No operational screens or end-to-end user procedures are available yet.
+**Status:** Installed. See [Module 08 setup and operations](../module-eight.md).
 
 **Purpose:** Track service issues against ownership and SLAs.
 
@@ -168,19 +168,19 @@ See [Module 05 setup and user guide](../module-five.md). The specifications requ
 
 | Specified feature | Required functionality / planned scope |
 | --- | --- |
-| Ticket Intake | Manual, email, API, call and portal |
+| Ticket Intake | Staff portal, customer portal, authenticated API/email bridge and call-linked |
 | Categories | Technical, billing, complaint and request |
 | Priorities | Low, normal, high and critical |
 | Assignment | Team, agent and escalation owner |
 | Lifecycle | Open, assigned, in progress, waiting, resolved, closed |
-| SLA | Response and resolution commitments |
-| Escalations | Overdue and breach workflows |
+| SLA | Configurable response and resolution targets by priority |
+| Escalations | Scheduled breach detection, event history and owner routing |
 | Conversations | Internal notes and customer messages |
-| Attachments | Secure file handling |
-| Satisfaction | Post-resolution feedback |
-| Analytics | SLA compliance, reopen rate and resolution time |
+| Attachments | Private file storage and authorized downloads |
+| Satisfaction | One-time post-resolution customer feedback |
+| Analytics | SLA breaches, reopen counts and average resolution time |
 
-**Before operational use:** approve the provider interface, event mapping, lawful recording policy and role assignments; configure the encrypted connection profile and signing secret; then verify events against the provider.
+**Before operational use:** configure ticket categories and SLA targets, grant ticket permissions, start the Laravel scheduler, and connect any inbound support mailbox to the authenticated ticket intake API.
 
 ## Module 09 SMS & Communication Management
 

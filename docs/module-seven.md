@@ -30,7 +30,7 @@ The webhook accepts the documented generic event shape for installations that ha
 
 ## Permissions
 
-`calls.view`, `calls.disposition`, `calls.configure`, `calls.dial`, `calls.recordings.view`, `calls.supervise` and `calls.qa.manage` are seeded additively. Administrator gets all Module 7 permissions; Support gets call view/disposition; Operations gets call view/disposition/supervision. Grant `calls.dial` only to staff authorized to place outbound calls. Click-to-dial uses VitalPBX `POST /api/v2/core/click_to_call`; the user's own mapped extension rings first and the destination is called after the user answers. The VitalPBX application key must have click-to-call permission for the configured tenant.
+`calls.view`, `calls.disposition`, `calls.configure`, `calls.dial`, `calls.recordings.view`, `calls.supervise` and `calls.qa.manage` are seeded additively. Administrator gets all Module 7 permissions, including `calls.dial`; remove that grant through Roles & Permissions if some administrators should not place calls. Support gets call view/disposition; Operations gets call view/disposition/supervision. Click-to-dial uses VitalPBX `POST /api/v2/core/click_to_call`; the user's own mapped extension rings first and the destination is called after the user answers. The VitalPBX application key must have click-to-call permission for the configured tenant.
 
 ```bash
 php artisan migrate --force

@@ -1,9 +1,9 @@
 # GWO SEVO ERP — User Guide
 
-**Edition:** 19 October 2026 · **Audience:** staff, supervisors, reviewers and administrators
+**Edition:** 20 October 2026 · **Audience:** staff, supervisors, reviewers and administrators
 **Application:** <https://localhost/gwosevo-erp/public/>
 
-This guide describes the application currently installed in this repository. Modules 01–07 are installed. Modules 08–22 remain planned and do not have operational user screens yet. Their feature catalogue is included in the [module roadmap](module-roadmap.md); those descriptions are requirements, not instructions for functions already available.
+This guide describes the application currently installed in this repository. Modules 01–08 are installed within the commissioning boundaries described here. Modules 09–22 remain planned and do not have operational user screens yet. Their feature catalogue is included in the [module roadmap](module-roadmap.md).
 
 The names “superadmin” and “Administrator” refer here to the existing Administrator account/role. This guide contains no account passwords, invitation tokens or integration secrets.
 
@@ -18,12 +18,13 @@ The names “superadmin” and “Administrator” refer here to the existing Ad
 7. [Module 05 — Sales pipeline and opportunities](#module-05--sales-pipeline-and-opportunities)
 8. [Module 06 — Quotations, contracts and client onboarding](#module-06--quotations-contracts-and-client-onboarding)
 9. [Module 07 — Contact centre and VitalPBX](#module-07--contact-centre-and-vitalpbx)
-10. [Modules 08–22 — Planned capabilities](#modules-0822--planned-capabilities)
-11. [Daily and periodic routines](#daily-and-periodic-routines)
-12. [Troubleshooting](#troubleshooting)
-13. [Administrator setup checklist](#administrator-setup-checklist)
-14. [Glossary](#glossary)
-15. [Technical and commissioning notes](#technical-and-commissioning-notes)
+10. [Module 08 — Customer support and ticketing](#module-08--customer-support-and-ticketing)
+11. [Modules 09–22 — Planned capabilities](#modules-0922--planned-capabilities)
+12. [Daily and periodic routines](#daily-and-periodic-routines)
+13. [Troubleshooting](#troubleshooting)
+14. [Administrator setup checklist](#administrator-setup-checklist)
+15. [Glossary](#glossary)
+16. [Technical and commissioning notes](#technical-and-commissioning-notes)
 
 ## Getting started and navigation
 
@@ -449,16 +450,33 @@ The screen provides call and queue summaries, inbound/outbound/missed/abandoned 
 
 To commission a provider, an authorized user creates a PBX profile. The webhook signing secret is shown once in the success message; store it in the approved PBX configuration. Set the approved HTTPS API base URL, then activate the profile to accept signed inbound events at `/api/v1/pbx/{connection}/events`. Requests use `X-PBX-Timestamp` and `X-PBX-Signature`, where the signature is HMAC-SHA256 over `<timestamp>.<raw request body>` using the profile secret; timestamps must be within five minutes. Events are rate limited. The supported payloads are `call.completed` and `agent.activity`; consult the integration owner before mapping VitalPBX/Asterisk events to them.
 
-**Provider commissioning remains required:** the source specification says the exact VitalPBX/Asterisk API, AMI/CDR/CEL feed, recording interface and lawful retention policy are to be confirmed. No live PBX call is made by this installation. Click-to-call is reserved for the approved outbound adapter and is not active yet. Recording links are stored as references only; downloads are not provided. The current screen does not offer connection testing, recording retention purge, detailed service-level targets or integration event history. Do not put AMI credentials in a browser or expose AMI to the internet.
+**Provider commissioning remains required:** configure the VitalPBX HTTPS API key and tenant in `.env`, map each ERP user to their own extension, and grant `calls.dial` to users allowed to place calls. The Administrator role includes this permission; restrict it through Roles & Permissions if some administrators should not dial. **Click to dial** rings the selected user's mapped extension first; after they answer, VitalPBX calls the entered destination. The API key stays on the server. Recording links are stored as references only; downloads are not provided. The known CDR `getRecordingAuthParam()` exception is raised by VitalPBX and must be corrected by the PBX vendor/update path.
 
 For manual calls, enter the event and number details; the ERP attempts an exact phone-digit match against the active organization. Verify caller identity before linking the call to a customer. Add a disposition and follow-up after the call. Supervisors create a quality form using one criterion per line, then score each criterion from 0 to 5.
 
-## Modules 08–22 — Planned capabilities
+## Module 08 — Customer support and ticketing
+
+**Status:** Installed. Open Operations → **Support tickets**. Access is scoped to the active organization and controlled by `tickets.*` permissions.
+
+Create a ticket with requester details, category, priority, related CRM contact/account, or a call record. Assign a team and agent, update the lifecycle (open, assigned, in progress, waiting, resolved, closed), and add customer-visible replies or internal notes. Attachments are stored on the private local disk and downloaded only by authorized organization members or through the ticket's customer portal link.
+
+Administrators or users with `tickets.manage` add categories and set response/resolution targets by priority. Targets are elapsed minutes, begin at ticket creation, and apply to new tickets. The scheduled `tickets:check-sla` command records each breach once and routes the ticket to its escalation owner. Keep the Laravel scheduler running (`schedule:run` once per minute) for breach detection. The ticket list summarizes open, unassigned, breached, reopened and average resolution hours.
+
+Use the **customer portal submission link** `/support/submit/{organization-code}` for unauthenticated requests. The requester receives a private bearer link after submission; anyone holding that link can read public ticket messages, reply, download public attachments and submit satisfaction feedback after resolution. Treat the link like a password. Internal notes remain hidden.
+
+Authenticated integrations can create tickets at `POST /api/v1/tickets` using a Sanctum token for an active user with `tickets.create` in the active organization. An email-to-ticket service can forward parsed mail to this endpoint with `channel=email`; this ERP provides the secure intake API, while mailbox polling/forwarding remains part of the operator's mail setup. Call-centre agents can link a ticket to an existing call record on creation.
+
+Attachments are limited to five per message, 10 MB each, with PDF, common image, text/CSV, Word and Excel formats. The standard local disk is private; configure encrypted private storage and backups for production. SLA calculations use elapsed time rather than business calendars. For staff/API tickets, requester emails receive public messages and the private portal link when the requester's address is supplied. Internal notes and attachments are excluded. Portal links are bearer credentials.
+
+## Email activity log
+
+Laravel email attempts and successful sends are recorded in `storage/logs/email.log`; failed mail notifications are marked as failures. Entries include recipient addresses, subject and message ID, but never message bodies or attachments. Follow the file with `tail -f storage/logs/email.log`. Ensure the production PHP user can write to `storage/logs`.
+
+## Modules 09–22 — Planned capabilities
 
 These modules do not yet have operational screens in this installation. The [complete module roadmap](module-roadmap.md) lists every specified module and feature, including the distinction between current foundations and future work.
 
 | Module | Planned area |
-| 08 | Customer support and ticketing |
 | 09 | SMS and communication management |
 | 10 | Marketing, campaigns and lead generation |
 | 11 | Human resources and employee records |

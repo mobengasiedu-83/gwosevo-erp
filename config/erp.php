@@ -9,7 +9,7 @@ return [
         'sales' => ['name' => '05 · Sales Pipeline & Opportunities', 'available' => true, 'required' => false],
         'contracts' => ['name' => '06 · Quotations, Contracts & Client Onboarding', 'available' => true, 'required' => false],
         'contact_centre' => ['name' => '07 · Contact Centre & VitalPBX', 'available' => true],
-        'support' => ['name' => '08 · Customer Support & Ticketing', 'available' => false],
+        'support' => ['name' => '08 · Customer Support & Ticketing', 'available' => true],
         'sms' => ['name' => '09 · SMS & Communication Management', 'available' => false],
         'marketing' => ['name' => '10 · Marketing, Campaigns & Lead Generation', 'available' => false],
         'hr' => ['name' => '11 · Human Resources & Employee Records', 'available' => false],

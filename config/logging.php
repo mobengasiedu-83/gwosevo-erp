@@ -65,6 +65,15 @@ return [
             'replace_placeholders' => true,
         ],
 
+        'email' => [
+            'driver' => 'single',
+            'path' => storage_path('logs/email.log'),
+            'level' => env('EMAIL_LOG_LEVEL', 'info'),
+            'permission' => 0600,
+            'locking' => true,
+            'replace_placeholders' => true,
+        ],
+
         'daily' => [
             'driver' => 'daily',
             'path' => storage_path('logs/laravel.log'),
