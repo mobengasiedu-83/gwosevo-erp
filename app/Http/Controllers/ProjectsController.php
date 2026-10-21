@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rule;
 
 class ProjectsController extends Controller
@@ -61,14 +62,53 @@ class ProjectsController extends Controller
     public function show(Request $request, int $project)
     {
         $this->enabled(); $org = $this->org($request); $p = $this->project($request,$org,$project);
+        $view = $request->query('view', 'kanban');
+        if (! in_array($view, ['kanban', 'list', 'gantt'], true)) $view = 'kanban';
         $members = DB::table('project_members as m')->join('users as u','u.id','=','m.user_id')->where('m.project_id',$p->id)->select('m.*','u.name','u.email')->orderBy('u.name')->get();
         $workstreams = DB::table('project_workstreams')->where('project_id',$p->id)->orderBy('name')->get();
         $tasks = DB::table('project_tasks as t')->leftJoin('users as u','u.id','=','t.owner_id')->where('t.project_id',$p->id)->select('t.*','u.name as owner_name')->orderByRaw('t.parent_task_id is null desc')->orderBy('t.due_on')->get();
         $tasks->each(function($task){ $task->hours=(float)DB::table('project_time_entries')->where('task_id',$task->id)->sum('hours'); $task->dependencies=DB::table('project_task_dependencies as d')->join('project_tasks as t','t.id','=','d.depends_on_task_id')->where('d.task_id',$task->id)->select('t.id','t.title','t.status')->get(); $task->comments=DB::table('project_comments as c')->join('users as u','u.id','=','c.user_id')->where('c.task_id',$task->id)->select('c.*','u.name as user_name')->orderBy('c.created_at')->get()->each(function($c){$c->body=Crypt::decryptString($c->body);}); $task->attachments=DB::table('project_attachments')->where('task_id',$task->id)->orderByDesc('created_at')->get(); });
         $milestones=DB::table('project_milestones')->where('project_id',$p->id)->orderBy('due_on')->get(); $risks=DB::table('project_risks')->where('project_id',$p->id)->orderByDesc('created_at')->get();
+        $rangeDates = collect([$p->starts_on, $p->ends_on])
+            ->merge($tasks->flatMap(fn ($task) => [$task->starts_on, $task->due_on]))
+            ->merge($milestones->pluck('due_on'))
+            ->filter()
+            ->sort()
+            ->values();
+        $timelineStart = Carbon::parse($rangeDates->first() ?: today()->toDateString())->startOfMonth();
+        $timelineEnd = Carbon::parse($rangeDates->last() ?: today()->addDays(30)->toDateString())->endOfMonth();
+        if ($timelineEnd->lessThanOrEqualTo($timelineStart)) $timelineEnd = $timelineStart->copy()->addMonthNoOverflow()->endOfMonth();
+        $timelineDays = $timelineStart->diffInDays($timelineEnd) + 1;
+        $timelineMonths = [];
+        for ($month = $timelineStart->copy()->startOfMonth(); $month->lessThanOrEqualTo($timelineEnd); $month->addMonthNoOverflow()) {
+            $segmentStart = $month->greaterThan($timelineStart) ? $month : $timelineStart;
+            $segmentEnd = $month->copy()->endOfMonth()->lessThan($timelineEnd) ? $month->copy()->endOfMonth() : $timelineEnd;
+            $timelineMonths[] = ['label' => $month->format('M Y'), 'width' => ($segmentStart->diffInDays($segmentEnd) + 1) / $timelineDays * 100];
+        }
+        $ganttBars = [];
+        foreach ($tasks as $task) {
+            if (! $task->starts_on && ! $task->due_on) continue;
+            $start = Carbon::parse($task->starts_on ?: $task->due_on);
+            $end = Carbon::parse($task->due_on ?: $task->starts_on);
+            $clampedStart = $start->greaterThan($timelineStart) ? $start : $timelineStart;
+            $clampedEnd = $end->lessThan($timelineEnd) ? $end : $timelineEnd;
+            if ($clampedEnd->lessThan($clampedStart)) continue;
+            $ganttBars[$task->id] = [
+                'left' => ($timelineStart->diffInDays($clampedStart) / $timelineDays) * 100,
+                'width' => max(1.5, ($clampedStart->diffInDays($clampedEnd) + 1) / $timelineDays * 100),
+            ];
+        }
+        $ganttMilestones = [];
+        foreach ($milestones as $milestone) {
+            if (! $milestone->due_on) continue;
+            $date = Carbon::parse($milestone->due_on);
+            if ($date->greaterThanOrEqualTo($timelineStart) && $date->lessThanOrEqualTo($timelineEnd)) {
+                $ganttMilestones[$milestone->id] = ($timelineStart->diffInDays($date) / $timelineDays) * 100;
+            }
+        }
         $users=$org->users()->where('users.status','active')->orderBy('users.name')->get(['users.id','users.name']);
         $timeEntries=DB::table('project_time_entries as t')->join('users as u','u.id','=','t.user_id')->where('t.project_id',$p->id)->orderByDesc('t.work_date')->limit(30)->select('t.*','u.name as user_name')->get();
-        return view('projects.show',compact('org','p','members','workstreams','tasks','milestones','risks','users','timeEntries'));
+        return view('projects.show',compact('org','p','members','workstreams','tasks','milestones','risks','users','timeEntries','view','timelineStart','timelineEnd','timelineDays','timelineMonths','ganttBars','ganttMilestones'));
     }
 
     public function store(Request $request)
@@ -81,11 +121,37 @@ class ProjectsController extends Controller
 
     public function workstreamStore(Request $request,int $project){$this->enabled();$org=$this->org($request);$p=$this->project($request,$org,$project);abort_unless($this->has($request,'projects.manage'),403);$d=$request->validate(['name'=>['required','string','max:160'],'department_name'=>['nullable','string','max:120'],'lead_user_id'=>['nullable','integer']]);if($d['lead_user_id']??null)$this->member($request,$org,$d['lead_user_id']);DB::table('project_workstreams')->insert([...$d,'organization_id'=>$org->id,'project_id'=>$p->id,'created_at'=>now(),'updated_at'=>now()]);return back()->with('success','Workstream added.');}
 
-    public function taskStore(Request $request,int $project){$this->enabled();$org=$this->org($request);$p=$this->project($request,$org,$project);abort_unless($this->has($request,'projects.tasks.manage')||$this->has($request,'projects.manage'),403);$d=$request->validate(['title'=>['required','string','max:200'],'description'=>['nullable','string','max:10000'],'workstream_id'=>['nullable','integer'],'parent_task_id'=>['nullable','integer'],'owner_id'=>['nullable','integer'],'priority'=>['required',Rule::in(['low','medium','high','urgent'])],'status'=>['required',Rule::in(['backlog','todo','in_progress','blocked','pending_approval','done','cancelled'])],'starts_on'=>['nullable','date'],'due_on'=>['nullable','date'],'estimate_hours'=>['nullable','numeric','min:0','max:100000'],'is_deliverable'=>['nullable','boolean']]);
+    public function taskStore(Request $request,int $project){$this->enabled();$org=$this->org($request);$p=$this->project($request,$org,$project);abort_unless($this->has($request,'projects.tasks.manage')||$this->has($request,'projects.manage'),403);$d=$request->validate(['title'=>['required','string','max:200'],'description'=>['nullable','string','max:10000'],'workstream_id'=>['nullable','integer'],'parent_task_id'=>['nullable','integer'],'owner_id'=>['nullable','integer'],'priority'=>['required',Rule::in(['low','medium','high','urgent'])],'status'=>['required',Rule::in(['backlog','todo','in_progress','blocked','pending_approval','done','cancelled'])],'starts_on'=>['nullable','date'],'due_on'=>['nullable','date',...($request->filled('starts_on')?['after_or_equal:starts_on']:[])],'estimate_hours'=>['nullable','numeric','min:0','max:100000'],'is_deliverable'=>['nullable','boolean']]);
         if($d['workstream_id']??null)abort_unless(DB::table('project_workstreams')->where('project_id',$p->id)->where('id',$d['workstream_id'])->exists(),422);if($d['parent_task_id']??null)abort_unless(DB::table('project_tasks')->where('project_id',$p->id)->where('id',$d['parent_task_id'])->exists(),422);if($d['owner_id']??null){$this->member($request,$org,$d['owner_id']);abort_unless($this->has($request,'projects.tasks.assign')||$d['owner_id']==$request->user()->id||$this->has($request,'projects.manage'),403);}
         $id=DB::table('project_tasks')->insertGetId([...$d,'organization_id'=>$org->id,'project_id'=>$p->id,'created_by'=>$request->user()->id,'is_deliverable'=>(bool)($d['is_deliverable']??false),'approval_status'=>($d['is_deliverable']??false)?'pending':'not_required','created_at'=>now(),'updated_at'=>now()]);AdminAudit::record('projects.task.created','project_tasks',$id,null,$d,$org->id);return back()->with('success','Task added to the project.');}
 
-    public function taskUpdate(Request $request,int $task){$this->enabled();$org=$this->org($request);$t=DB::table('project_tasks')->where('organization_id',$org->id)->where('id',$task)->first();abort_unless($t,404);$p=$this->project($request,$org,$t->project_id);$self=(int)$t->owner_id===(int)$request->user()->id;abort_unless($self||$this->has($request,'projects.tasks.manage')||$this->has($request,'projects.manage'),403);$d=$request->validate(['status'=>['required',Rule::in(['backlog','todo','in_progress','blocked','pending_approval','done','cancelled'])],'priority'=>['nullable',Rule::in(['low','medium','high','urgent'])],'due_on'=>['nullable','date']]);if($d['status']==='done'&&$t->is_deliverable&&$t->approval_status!=='approved')abort(422,'A deliverable must be approved before it can be completed.');DB::table('project_tasks')->where('id',$task)->update([...$d,'updated_at'=>now()]);AdminAudit::record('projects.task.updated','project_tasks',$task,['status'=>$t->status],$d,$org->id);return back()->with('success','Task updated.');}
+    public function taskUpdate(Request $request, int $task)
+    {
+        $this->enabled();
+        $org = $this->org($request);
+        $record = DB::table('project_tasks')->where('organization_id', $org->id)->where('id', $task)->first();
+        abort_unless($record, 404);
+        $this->project($request, $org, $record->project_id);
+
+        $self = (int) $record->owner_id === (int) $request->user()->id;
+        abort_unless($self || $this->has($request, 'projects.tasks.manage') || $this->has($request, 'projects.manage'), 403);
+
+        $data = $request->validate([
+            'status' => ['required', Rule::in(['backlog', 'todo', 'in_progress', 'blocked', 'pending_approval', 'done', 'cancelled'])],
+            'priority' => ['nullable', Rule::in(['low', 'medium', 'high', 'urgent'])],
+            'starts_on' => ['nullable', 'date'],
+            'due_on' => ['nullable', 'date', ...($request->filled('starts_on') ? ['after_or_equal:starts_on'] : [])],
+        ]);
+
+        if ($data['status'] === 'done' && $record->is_deliverable && $record->approval_status !== 'approved') {
+            abort(422, 'A deliverable must be approved before it can be completed.');
+        }
+
+        DB::table('project_tasks')->where('id', $task)->update([...$data, 'updated_at' => now()]);
+        AdminAudit::record('projects.task.updated', 'project_tasks', $task, ['status' => $record->status], $data, $org->id);
+
+        return back()->with('success', 'Task updated.');
+    }
 
     public function dependencyStore(Request $request,int $task){$this->enabled();$org=$this->org($request);$t=DB::table('project_tasks')->where('organization_id',$org->id)->where('id',$task)->firstOrFail();$p=$this->project($request,$org,$t->project_id);abort_unless($this->has($request,'projects.tasks.manage')||$this->has($request,'projects.manage'),403);$d=$request->validate(['depends_on_task_id'=>['required','integer','different:task']]);$dep=DB::table('project_tasks')->where('organization_id',$org->id)->where('project_id',$p->id)->where('id',$d['depends_on_task_id'])->firstOrFail();abort_if($dep->id===$t->id,422);$seen=[$t->id];$cursor=$dep->id;while($cursor&&!in_array($cursor,$seen,true)){$seen[]=$cursor;$cursor=DB::table('project_task_dependencies')->where('task_id',$cursor)->value('depends_on_task_id');}abort_if($cursor===$t->id,422,'This dependency would create a cycle.');DB::table('project_task_dependencies')->insertOrIgnore(['task_id'=>$t->id,'depends_on_task_id'=>$dep->id,'created_at'=>now(),'updated_at'=>now()]);return back()->with('success','Task dependency saved.');}
 

@@ -6,6 +6,10 @@ Open **Operations & Projects → Projects & tasks**. All records are scoped to t
 
 Confirm each employee has an active ERP user account and organization membership before assigning them. Keep approval permissions separate from task ownership where deliverable sign-off requires independence. Private project files are encrypted with `APP_KEY` on local storage. Back up the application key and private storage together, and use a production retention policy.
 
+## Project views
+
+On a project page, use the view switcher to choose **Kanban**, **List** or **Gantt chart**. The selection is stored in the `view` query parameter, so it remains selected after refresh and can be linked directly. Kanban groups top-level work by status and includes the task actions. List includes top-level tasks and subtasks, their workstream, owner, dates, status, priority and dependencies; authorized users can update status, priority and dates there. Gantt plots tasks with start/due dates and dated milestones across the project timeline; tasks without either date are shown as unplanned. The chart displays dependency names in the List view but does not draw dependency connector lines. Create or edit task dates in Kanban or List to update its Gantt bar.
+
 ## Create and plan work
 
 1. Create a project with its owner, optional client, budget, dates, status and description.
