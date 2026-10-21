@@ -9,3 +9,31 @@
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
+
+.workspace-flash-popup {
+    position: fixed;
+    z-index: 120;
+    top: 82px;
+    right: 24px;
+    display: grid;
+    gap: 10px;
+    width: min(520px, calc(100vw - 32px));
+    pointer-events: none;
+}
+
+.workspace-flash-popup > * {
+    width: 100%;
+    margin: 0 !important;
+    pointer-events: auto;
+    box-shadow: 0 14px 40px rgba(23, 35, 20, .16);
+    animation: flash-popup-in .18s ease-out both;
+}
+
+@keyframes flash-popup-in {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 600px) {
+    .workspace-flash-popup { top: 70px; right: 16px; width: calc(100vw - 32px); }
+}

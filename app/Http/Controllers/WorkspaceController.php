@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Organization;
 use App\Models\User;
-use App\Notifications\AutomationNotification;
+use App\Notifications\WorkspaceTaskAssignedNotification;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -94,10 +94,24 @@ class WorkspaceController extends Controller
         ]);
         $assignmentPreference = DB::table('automation_preferences')->where('organization_id', $organization->id)
             ->where('user_id', $data['assigned_to'])->where('event_key', 'workspace.task.assigned')->first();
-        if ((int) $data['assigned_to'] !== (int) $request->user()->id && ($assignmentPreference?->in_app ?? true)) {
-            User::findOrFail($data['assigned_to'])->notify(new AutomationNotification(
-                'A task was assigned to you', $data['title'], route('workspace.tasks.index'), 'workspace.task.assigned', (int) $organization->id,
-            ));
+        if ((int) $data['assigned_to'] !== (int) $request->user()->id) {
+            $assignee = User::findOrFail($data['assigned_to']);
+            $channels = [];
+            if ($assignmentPreference?->in_app ?? true) {
+                $channels[] = 'database';
+            }
+            if (($assignmentPreference?->email ?? false) && filled($assignee->email)) {
+                $channels[] = 'mail';
+            }
+            if ($channels !== []) {
+                $assignee->notify(new WorkspaceTaskAssignedNotification(
+                    title: $data['title'],
+                    description: $data['description'] ?? null,
+                    dueAt: $data['due_at'] ?? null,
+                    organizationId: (int) $organization->id,
+                    channels: $channels,
+                ));
+            }
         }
 
         return to_route('workspace.tasks.index')->with('success', 'Task created and assigned.');

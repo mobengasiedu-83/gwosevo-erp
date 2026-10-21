@@ -135,6 +135,21 @@ const ui = () => {
         button.setAttribute('aria-pressed', String(reveal));
     }));
     document.querySelectorAll('[data-dismiss-notice]').forEach((button) => button.addEventListener('click', () => button.closest('.notice')?.remove()));
+    const flashMessages = [...document.querySelectorAll('.notice.success, .notice.error, .alert-success, .alert-danger, [role="alert"], [data-auto-dismiss], .bg-green-50, .bg-red-50')];
+    if (flashMessages.length) {
+        const popup = document.createElement('div');
+        popup.className = 'workspace-flash-popup';
+        popup.setAttribute('aria-live', 'polite');
+        popup.setAttribute('aria-relevant', 'additions');
+        document.body.append(popup);
+        flashMessages.forEach((notice) => {
+            popup.append(notice);
+            window.setTimeout(() => {
+                notice.remove();
+                if (!popup.childElementCount) popup.remove();
+            }, 5000);
+        });
+    }
     const notificationBell = document.querySelector('[data-notification-bell]');
     const notificationBadge = notificationBell?.querySelector('[data-notification-count]');
     const notificationToast = document.querySelector('[data-notification-toast]');
@@ -166,7 +181,7 @@ const ui = () => {
                     } catch { notificationToastLink.href = notificationBell.href; }
                     notificationToast.hidden = false;
                     clearTimeout(notificationToastTimer);
-                    notificationToastTimer = setTimeout(() => { notificationToast.hidden = true; }, 9000);
+                    notificationToastTimer = setTimeout(() => { notificationToast.hidden = true; }, 5000);
                 }
             }
             unreadNotifications = count;

@@ -30,6 +30,7 @@ use App\Http\Controllers\ReportsController;
 use App\Http\Controllers\AutomationController;
 use App\Http\Controllers\IntegrationController;
 use App\Http\Controllers\SecurityCentreController;
+use App\Http\Controllers\UserManualController;
 use App\Models\SalesPipelineStage;
 use App\Http\Controllers\CRM\LeadAssignmentRulesController;
 use App\Http\Controllers\CRM\LeadNotificationController;
@@ -57,6 +58,7 @@ Route::middleware('guest')->group(function () {
 });
 Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
+    Route::get('/user-manual', UserManualController::class)->name('user-manual');
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
     Route::put('/workspace/dashboard-preferences', [WorkspaceController::class, 'dashboardPreferencesUpdate'])->name('workspace.dashboard.preferences');
     Route::prefix('workspace')->name('workspace.')->group(function () {

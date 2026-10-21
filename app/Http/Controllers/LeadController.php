@@ -27,8 +27,9 @@ class LeadController extends Controller
             ->when($r->filled('search'), fn ($q) => $q->where(fn ($x) => $x->where('first_name', 'like', '%'.$r->search.'%')->orWhere('last_name', 'like', '%'.$r->search.'%')->orWhere('company_name', 'like', '%'.$r->search.'%')->orWhere('email', 'like', '%'.$r->search.'%')->orWhere('phone', 'like', '%'.$r->search.'%')));
         $leads = $query->latest()->paginate(app(Settings::class)->get('pagination'))->withQueryString();
         $sources = $this->sourceOptions($r);
+        $customFields = $this->customFields();
 
-        return view('leads.index', compact('leads', 'sources'));
+        return view('leads.index', compact('leads', 'sources', 'customFields'));
     }
 
     public function create()

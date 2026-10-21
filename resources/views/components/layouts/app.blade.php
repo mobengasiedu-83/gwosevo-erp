@@ -1,6 +1,6 @@
 @php
 $navigation = app(\App\Support\WorkspaceNavigation::class)->groups(auth()->user());
-$currentLabel = 'Workspace';
+$currentLabel = request()->routeIs('user-manual') ? 'User manual' : 'Workspace';
 $matchesNavigationLink = fn ($link) => request()->routeIs($link['match']) && collect($link['parameters'] ?? [])->every(fn ($value, $key) => (string) (request()->route($key) ?? request()->query($key)) === (string) $value);
 foreach ($navigation as $links) {
     foreach ($links as $link) {
@@ -41,6 +41,7 @@ $unreadNotificationCount = auth()->user()->unreadNotifications()->count();
 </div></details>
 @endforeach
 </nav>
+<a class="sidebar-link sidebar-manual-link {{ request()->routeIs('user-manual') ? 'is-active' : '' }}" href="{{ route('user-manual') }}" @if(request()->routeIs('user-manual')) aria-current="page" @endif title="User manual" data-navigation-label="User manual"><x-ui.icon name="file" /><span>User manual</span></a>
 <div class="sidebar-note"><x-ui.icon name="leaf" /><p>Connected teams.<br><strong>Stronger outcomes.</strong></p><span class="brand-stripes"><i></i><i></i><i></i></span></div>
 <form method="POST" action="{{ route('logout') }}" class="sidebar-signout">
 @csrf<button aria-label="Sign out"><x-ui.icon name="logout" /><span>Sign out</span></button></form>
@@ -79,5 +80,21 @@ $unreadNotificationCount = auth()->user()->unreadNotifications()->count();
 @endforeach 
 @endforeach<p class="command-empty" hidden>No matching pages. Try a different name.</p></div><div class="command-footer">Quick navigation <span>Esc to close</span></div></dialog>
 <dialog class="confirm-dialog" id="workspace-confirm" aria-labelledby="confirm-title"><span class="confirm-symbol"><x-ui.icon name="shield" /></span><h2 id="confirm-title">Confirm this change</h2><p data-confirm-message></p><div class="row-actions"><button class="button secondary" data-confirm-cancel>Cancel</button><button class="button" data-confirm-accept>Confirm change</button></div></dialog>
+<script>
+(() => {
+    const nav = document.querySelector('.sidebar-navigation');
+    if (!nav) return;
+    const key = `gwo.sidebar.scroll.{{ auth()->id() }}`;
+    nav.querySelectorAll('a.sidebar-link').forEach((link) => link.addEventListener('click', () => {
+        try { sessionStorage.setItem(key, String(nav.scrollTop)); } catch {}
+    }));
+    requestAnimationFrame(() => {
+        try {
+            const saved = sessionStorage.getItem(key);
+            if (saved !== null) nav.scrollTop = Number(saved) || 0;
+        } catch {}
+    });
+})();
+</script>
 {{ app(\App\Domain\Administration\LivewireAssets::class)->scripts() }}
 </body></html>
