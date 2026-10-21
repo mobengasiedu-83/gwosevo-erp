@@ -17,9 +17,11 @@ class RoleController extends Controller
 {
     public const BUILT_IN = ['Administrator', 'Sales', 'Operations', 'Human Resources', 'Finance', 'Support', 'Read Only'];
 
-    public function index()
+    public function index(Request $request)
     {
-        return view('identity.roles', ['roles' => Role::where('guard_name', 'web')->with('permissions')->orderBy('name')->get(), 'permissions' => Permission::where('guard_name', 'web')->orderBy('name')->get()]);
+        $section = $request->query('section') === 'permissions' ? 'permissions' : 'roles';
+
+        return view('identity.roles', ['section' => $section, 'roles' => Role::where('guard_name', 'web')->with('permissions')->orderBy('name')->get(), 'permissions' => Permission::where('guard_name', 'web')->orderBy('name')->get()]);
     }
 
     public function save(Request $request, ?Role $role = null)

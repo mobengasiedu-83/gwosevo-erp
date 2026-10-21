@@ -2,28 +2,24 @@
 
 **Edition:** 20 October 2026. [Return to the user guide](README.md).
 
-The feature tables below reproduce the supplied Module Feature Breakdown as a requirements reference. Modules 01–22 are installed within the boundaries explained in the user guide.
+The feature tables below reproduce the supplied Module Feature Breakdown as a requirements reference. Modules 01–22 are installed within the boundaries explained in the user guide. The supplied top-level menu uses a separate grouping: top-level Module 1 is Workspace, top-level Module 2 is CRM & Customer Management, top-level Module 3 is Social Media Management, top-level Module 4 is Commercial & Sales, top-level Module 5 is Customer Experience, top-level Module 6 is Human Resources, top-level Module 7 is Operations & Projects, top-level Module 8 is Procurement & Assets, top-level Module 9 is Finance, top-level Module 10 is Knowledge & Intelligence, and top-level Module 11 is Administration. See the [top-level CRM guide](../module-two-crm.md), [top-level Social Media Management guide](../module-three-social-media.md), [top-level Commercial & Sales guide](../top-level-module-four-commercial-sales.md), [top-level Customer Experience guide](../top-level-module-five-customer-experience.md), [top-level Human Resources guide](../top-level-module-six-human-resources.md), [top-level Operations & Projects guide](../top-level-module-seven-operations-projects.md), [top-level Procurement & Assets guide](../top-level-module-eight-procurement-assets.md), [top-level Finance guide](../top-level-module-nine-finance.md), [top-level Knowledge & Intelligence guide](../top-level-module-ten-knowledge-intelligence.md), and [top-level Administration guide](../top-level-module-eleven-administration.md); these consolidate functionality cross-referenced under the older sequential module catalogue.
 
-## Module 01 System Administration & Configuration
+## Module 01 Workspace
 
-**Status:** Installed. See the main user guide for operating instructions and configuration/commissioning boundaries.
+**Status:** Installed locally. The Workspace menu has My Dashboard, My Tasks, My Approvals, My Calendar, Notifications, and My Profile. See the [Module 01 Workspace guide](../module-one-workspace.md) for features, migration, and scheduler setup.
 
-**Purpose:** Central management of ERP settings.
+**Purpose:** Personal landing page and daily-work hub.
 
 **Priority:** Foundation
 
 | Specified feature | Required functionality / planned scope |
 | --- | --- |
-| General Settings | Company profile, logo, contact details, time zone, date formats |
-| Branding | Login screen, templates, PDF branding |
-| System Preferences | Currency, financial year, pagination and numbering |
-| Module Management | Module configuration and controlled enablement |
-| Custom Fields | Administrator-defined fields for supported records |
-| Reference Data | Countries, regions, industries and customer categories |
-| Number Sequences | Lead, customer, ticket, quotation and invoice references |
-| Data Import/Export | CSV/Excel mapping, validation and controlled export |
-| System Health | Queue, scheduler, database and storage checks |
-| Maintenance | Maintenance mode and operational notices |
+| My Dashboard | Personal task, approval, calendar and notification summaries |
+| My Tasks | Assigned tasks, status, priority, due dates, comments and filtering |
+| My Approvals | Pending decisions, request context, decisions and history |
+| My Calendar | Personal events, monthly view and reminders |
+| Notifications | Bell, unread count, toast, history, read/archive and preferences |
+| My Profile | Personal details, security and notification preferences |
 
 ## Module 02 Identity, Users, Roles & Permissions
 

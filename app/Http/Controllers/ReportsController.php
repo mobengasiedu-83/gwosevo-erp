@@ -49,7 +49,16 @@ class ReportsController extends Controller
         $schedules = $this->canManage($request)
             ? DB::table('bi_report_schedules as s')->join('bi_custom_reports as r', 'r.id', '=', 's.report_id')->where('s.organization_id', $organizationId)->where('s.is_active', true)->select('s.*', 'r.name as report_name')->orderBy('s.next_run_at')->get()
             : DB::table('bi_report_schedules as s')->join('bi_custom_reports as r', 'r.id', '=', 's.report_id')->where('s.organization_id', $organizationId)->where('s.created_by', $user->id)->where('s.is_active', true)->select('s.*', 'r.name as report_name')->orderBy('s.next_run_at')->get();
-        return view('reports.index', compact('sources', 'widgets', 'kpis', 'savedReports', 'schedules', 'organizationId', 'from', 'to'));
+        $section = (string) $request->query('section', 'executive');
+        abort_unless(in_array($section, ['executive', 'custom', 'scheduled', 'exports'], true), 404);
+        return view('reports.index', compact('sources', 'widgets', 'kpis', 'savedReports', 'schedules', 'organizationId', 'from', 'to', 'section'));
+    }
+
+    public function section(Request $request, string $section, BusinessReports $reports)
+    {
+        abort_unless(in_array($section, ['executive', 'custom', 'scheduled', 'exports'], true), 404);
+        $request->query->set('section', $section);
+        return $this->index($request, $reports);
     }
 
     public function store(Request $request, BusinessReports $reports)

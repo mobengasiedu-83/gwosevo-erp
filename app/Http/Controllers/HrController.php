@@ -70,6 +70,70 @@ class HrController extends Controller
         return view('hr.index', compact('org','organizations','employees','stats','expiring','options','courses','reports','averageTenureYears','turnoverPercent'));
     }
 
+    public function onboarding(Request $request)
+    {
+        $this->enabled();
+        abort_unless($request->user()->can('hr.view'), 403);
+        $org = $this->organization($request);
+        $tasks = HrLifecycleTask::with(['employee', 'assignee'])
+            ->where('organization_id', $org->id)
+            ->where('phase', 'onboarding')
+            ->orderByRaw('completed_at IS NOT NULL')
+            ->orderBy('due_on')
+            ->paginate(30)
+            ->withQueryString();
+        $preboarding = HrEmployee::where('organization_id', $org->id)
+            ->where('status', 'preboarding')
+            ->withCount(['tasks as onboarding_tasks_total' => fn ($query) => $query->where('phase', 'onboarding')])
+            ->withCount(['tasks as onboarding_tasks_open' => fn ($query) => $query->where('phase', 'onboarding')->whereNull('completed_at')])
+            ->orderBy('last_name')
+            ->get();
+
+        return view('hr.onboarding', compact('org', 'tasks', 'preboarding'));
+    }
+
+    public function training(Request $request)
+    {
+        $this->enabled();
+        abort_unless($request->user()->can('hr.view') || $request->user()->can('hr.training.manage'), 403);
+        $org = $this->organization($request);
+        $courses = HrTrainingCourse::where('organization_id', $org->id)->withCount('records')->orderBy('name')->get();
+        $records = DB::table('hr_training_records as records')
+            ->join('hr_employees as employees', 'employees.id', '=', 'records.employee_id')
+            ->join('hr_training_courses as courses', 'courses.id', '=', 'records.course_id')
+            ->where('records.organization_id', $org->id)
+            ->select('records.*', 'employees.employee_number', 'employees.first_name', 'employees.last_name', 'courses.name as course_name')
+            ->orderByDesc('records.updated_at')
+            ->paginate(30)
+            ->withQueryString();
+
+        return view('hr.training', compact('org', 'courses', 'records'));
+    }
+
+    public function reports(Request $request)
+    {
+        $this->enabled();
+        abort_unless($request->user()->can('hr.reports.view'), 403);
+        $org = $this->organization($request);
+        $employees = HrEmployee::where('organization_id', $org->id);
+        $statusCounts = (clone $employees)->selectRaw('status, COUNT(*) as total')->groupBy('status')->pluck('total', 'status');
+        $total = (clone $employees)->count();
+        $active = (clone $employees)->where('status', 'active')->count();
+        $departures = (clone $employees)->where('status', 'terminated')->where('end_date', '>=', today()->subYear())->count();
+        $tenureDays = (clone $employees)->whereNotNull('hire_date')->get(['hire_date', 'end_date'])
+            ->map(fn ($employee) => $employee->hire_date->diffInDays($employee->end_date ?: today()));
+        $averageTenureYears = round(($tenureDays->avg() ?: 0) / 365.25, 1);
+        $turnoverPercent = round($departures / max($total, 1) * 100, 1);
+        $expiringContracts = HrEmploymentContract::with('employee')
+            ->where('organization_id', $org->id)
+            ->whereNotNull('renewal_date')
+            ->whereBetween('renewal_date', [today(), today()->addDays(90)])
+            ->orderBy('renewal_date')
+            ->get();
+
+        return view('hr.reports', compact('org', 'statusCounts', 'total', 'active', 'departures', 'averageTenureYears', 'turnoverPercent', 'expiringContracts'));
+    }
+
     public function store(Request $request)
     {
         $this->enabled(); abort_unless($request->user()->can('hr.manage'),403); $org=$this->organization($request);

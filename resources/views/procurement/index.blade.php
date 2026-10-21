@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="page-heading"><div><p class="eyebrow">Operations &amp; Projects / Module 17</p><h1>Procurement, assets &amp; inventory</h1><p class="muted">Manage suppliers, purchase approvals, receiving, stock custody and the asset lifecycle.</p></div></div>
+<div class="page-heading"><div><p class="eyebrow">Procurement &amp; Assets / Top-level Module 8</p><h1>Procurement Dashboard</h1><p class="muted">Manage suppliers, purchase approvals, receiving, stock custody and the asset lifecycle.</p></div></div>
 
 <div class="stats-grid">
     <div class="card"><span class="muted">Requests awaiting approval</span><strong>{{ $stats['pending_requests'] }}</strong></div>

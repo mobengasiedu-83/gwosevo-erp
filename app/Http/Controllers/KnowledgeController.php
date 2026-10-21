@@ -60,6 +60,8 @@ class KnowledgeController extends Controller
     public function index(Request $request)
     {
         [$organizationId, $user] = $this->context($request);
+        $section = (string) $request->query('section', 'knowledge-bank');
+        abort_unless(in_array($section, ['knowledge-bank', 'documents', 'ai-search', 'sources'], true), 404);
         $spaces = $this->spaces($organizationId, $user)->orderBy('s.name')->get();
         $spaceIds = $spaces->pluck('id');
         $query = trim((string) $request->query('q', ''));
@@ -87,7 +89,16 @@ class KnowledgeController extends Controller
             DB::table('knowledge_search_events')->insert(['organization_id' => $organizationId, 'user_id' => $user->id, 'query_hash' => hash('sha256', mb_strtolower($query)), 'query_text' => mb_substr($query, 0, 500), 'result_count' => $articles->total(), 'search_mode' => $searchMode, 'created_at' => now(), 'updated_at' => now()]);
         }
 
+        $documents = DB::table('knowledge_documents as d')->join('knowledge_articles as a', 'a.id', '=', 'd.article_id')->join('knowledge_spaces as s', 's.id', '=', 'a.space_id')
+            ->where('d.organization_id', $organizationId)->whereIn('a.space_id', $spaceIds)
+            ->where(function ($visibility) use ($user) {
+                if ($user->can('knowledge.articles.review') || $user->can('knowledge.articles.publish') || $user->can('knowledge.articles.edit')) return;
+                $visibility->where('a.status', 'published');
+                if ($user->can('knowledge.articles.create')) $visibility->orWhere(fn ($own) => $own->where('a.author_id', $user->id)->whereIn('a.status', ['draft', 'pending_review', 'changes_requested', 'approved']));
+            })
+            ->select('d.*', 'a.title as article_title', 'a.status as article_status', 'a.id as article_id', 's.name as space_name')->orderByDesc('d.created_at')->paginate(30)->withQueryString();
         return view('knowledge.index', [
+            'section' => $section, 'documentsList' => $documents,
             'spaces' => $spaces, 'articles' => $articles, 'categories' => DB::table('knowledge_categories')->where('organization_id', $organizationId)->orderBy('name')->get(),
             'canManageSpaces' => $user->can('knowledge.spaces.manage'), 'canCreate' => $user->can('knowledge.articles.create'),
             'canUpload' => $user->can('knowledge.documents.upload'), 'aiEnabled' => config('knowledge.ai_enabled') && (bool) config('knowledge.ai_api_key'),
@@ -98,6 +109,15 @@ class KnowledgeController extends Controller
                 'drafts' => $user->can('knowledge.articles.edit') || $user->can('knowledge.articles.review') ? DB::table('knowledge_articles')->where('organization_id', $organizationId)->whereIn('status', ['draft', 'pending_review', 'changes_requested'])->whereIn('space_id', $spaceIds)->count() : 0,
                 'documents' => DB::table('knowledge_documents')->where('organization_id', $organizationId)->whereIn('article_id', DB::table('knowledge_articles')->whereIn('space_id', $spaceIds)->select('id'))->count()],
         ]);
+    }
+
+    public function section(Request $request, string $section)
+    {
+        abort_unless(in_array($section, ['documents', 'ai-search', 'sources'], true), 404);
+        if ($section === 'documents') abort_unless($request->user()->can('knowledge.documents.view'), 403);
+        if ($section === 'sources') abort_unless($request->user()->can('knowledge.sync.manage'), 403);
+        $request->query->set('section', $section);
+        return $this->index($request);
     }
 
     public function show(Request $request, int $article)

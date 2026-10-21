@@ -1,0 +1,10 @@
+<x-layouts.app>
+<div class="page-heading"><div><p class="eyebrow">Human Resources / Module 6</p><h1>Onboarding</h1><p class="muted">Track preboarding employees and the onboarding checklist recorded on each employee profile.</p></div></div>
+@if(session('success'))<div class="alert alert-success">{{ session('success') }}</div>@endif
+<section class="card"><div class="section-heading"><div><h2>Preboarding employees</h2><p class="muted">Checklist counts include onboarding tasks for this organization.</p></div></div><div class="table-wrap"><table><thead><tr><th>Employee</th><th>Position</th><th>Onboarding tasks</th><th>Open tasks</th><th>Profile</th></tr></thead><tbody>
+@forelse($preboarding as $employee)<tr><td>{{ $employee->employee_number }} · {{ $employee->first_name }} {{ $employee->last_name }}</td><td>{{ $employee->position?->title ?? '—' }}</td><td>{{ $employee->onboarding_tasks_total }}</td><td>{{ $employee->onboarding_tasks_open }}</td><td><a href="{{ route('hr.employees.show', ['employee' => $employee, 'organization_id' => $org->id]) }}">Open employee</a></td></tr>@empty<tr><td colspan="5" class="empty-state">No employees are currently marked as preboarding.</td></tr>@endforelse
+</tbody></table></div></section>
+<section class="card"><div class="section-heading"><div><h2>Onboarding checklist</h2><p class="muted">Manage checklist items on an employee profile.</p></div></div><div class="table-wrap"><table><thead><tr><th>Employee</th><th>Checklist item</th><th>Due</th><th>Assigned to</th><th>Status</th></tr></thead><tbody>
+@forelse($tasks as $task)<tr><td>{{ $task->employee?->employee_number }} · {{ $task->employee?->first_name }} {{ $task->employee?->last_name }}</td><td>{{ $task->title }}</td><td>{{ $task->due_on?->format('Y-m-d') ?? '—' }}</td><td>{{ $task->assignee?->name ?? 'Unassigned' }}</td><td>{{ $task->completed_at ? 'Complete' : 'Open' }}</td></tr>@empty<tr><td colspan="5" class="empty-state">No onboarding checklist items recorded.</td></tr>@endforelse
+</tbody></table></div><div class="mt-4">{{ $tasks->links() }}</div></section>
+</x-layouts.app>

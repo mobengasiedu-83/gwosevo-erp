@@ -23,6 +23,7 @@ class OpportunityController extends Controller
 {
     public function index(Request $request, SalesAccess $access, OpportunityService $service)
     {
+        $viewMode = $request->routeIs('opportunities.pipeline') ? 'pipeline' : 'opportunities';
         $this->authorize('viewAny', Opportunity::class);
         $organizationId = (int) $request->user()->active_organization_id;
         $service->ensureStages($organizationId);
@@ -36,7 +37,7 @@ class OpportunityController extends Controller
         $pipelineTotal = (clone $access->query($request->user()))->whereNotIn('stage', ['won', 'lost'])->sum('amount');
         $weightedTotal = (clone $access->query($request->user()))->whereNotIn('stage', ['won', 'lost'])->selectRaw('COALESCE(SUM(amount * probability / 100),0) as total')->value('total');
         $owners = User::where('status', 'active')->whereHas('organizations', fn ($q) => $q->whereKey($organizationId))->orderBy('name')->get();
-        return view('sales.opportunities.index', compact('opportunities', 'stages', 'board', 'pipelineTotal', 'weightedTotal', 'owners'));
+        return view('sales.opportunities.index', compact('opportunities', 'stages', 'board', 'pipelineTotal', 'weightedTotal', 'owners', 'viewMode'));
     }
 
     public function create(Request $request, OpportunityService $service)

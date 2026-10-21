@@ -133,7 +133,7 @@ class AutomationController extends Controller
     public function preferenceSave(Request $request)
     {
         $organizationId = $this->organizationId($request);
-        $data = $request->validate(['event_key' => ['required', 'string', 'max:100', Rule::in(['approval.requested', 'approval.decided', 'automation.reminder', 'system.alert'])], 'in_app' => ['sometimes', 'boolean'], 'email' => ['sometimes', 'boolean'], 'sms' => ['sometimes', 'boolean']]);
+        $data = $request->validate(['event_key' => ['required', 'string', 'max:100', Rule::in(['approval.requested', 'approval.decided', 'automation.reminder', 'system.alert', 'workspace.task.assigned', 'workspace.calendar.reminder'])], 'in_app' => ['sometimes', 'boolean'], 'email' => ['sometimes', 'boolean'], 'sms' => ['sometimes', 'boolean']]);
         DB::table('automation_preferences')->updateOrInsert(['organization_id' => $organizationId, 'user_id' => $request->user()->id, 'event_key' => $data['event_key']], ['in_app' => (bool) ($data['in_app'] ?? false), 'email' => (bool) ($data['email'] ?? false), 'sms' => (bool) ($data['sms'] ?? false), 'updated_at' => now(), 'created_at' => now()]);
         return back()->with('success', 'Notification preferences saved.');
     }

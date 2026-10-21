@@ -12,6 +12,7 @@ use App\Models\Lead;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class LeadController extends Controller
@@ -25,7 +26,7 @@ class LeadController extends Controller
             ->when($r->filled('owner_id'), fn ($q) => $q->where('owner_id', $r->integer('owner_id')))
             ->when($r->filled('search'), fn ($q) => $q->where(fn ($x) => $x->where('first_name', 'like', '%'.$r->search.'%')->orWhere('last_name', 'like', '%'.$r->search.'%')->orWhere('company_name', 'like', '%'.$r->search.'%')->orWhere('email', 'like', '%'.$r->search.'%')->orWhere('phone', 'like', '%'.$r->search.'%')));
         $leads = $query->latest()->paginate(app(Settings::class)->get('pagination'))->withQueryString();
-        $sources = config('crm.sources');
+        $sources = $this->sourceOptions($r);
 
         return view('leads.index', compact('leads', 'sources'));
     }
@@ -34,7 +35,7 @@ class LeadController extends Controller
     {
         $this->authorize('create', Lead::class);
 
-        return view('leads.form', ['lead' => new Lead, 'customFields' => $this->customFields(), 'duplicates' => collect()]);
+        return view('leads.form', ['lead' => new Lead, 'customFields' => $this->customFields(), 'duplicates' => collect(), 'sources' => $this->sourceOptions(request())]);
     }
 
     public function store(Request $r, LeadService $s)
@@ -59,7 +60,7 @@ class LeadController extends Controller
     {
         $this->authorize('update', $lead);
 
-        return view('leads.form', ['lead' => $lead, 'customFields' => $this->customFields(), 'duplicates' => $lead->duplicate_reviewed_at && ! $lead->duplicate_of_id ? collect() : app(LeadDuplicates::class)->candidates($lead, 5, request()->user())]);
+        return view('leads.form', ['lead' => $lead, 'customFields' => $this->customFields(), 'duplicates' => $lead->duplicate_reviewed_at && ! $lead->duplicate_of_id ? collect() : app(LeadDuplicates::class)->candidates($lead, 5, request()->user()), 'sources' => $this->sourceOptions(request())]);
     }
 
     public function update(Request $r, Lead $lead, LeadService $service)
@@ -110,7 +111,7 @@ class LeadController extends Controller
     public function activity(Request $r, Lead $lead, LeadService $s)
     {
         $this->authorize('update', $lead);
-        $d = $r->validate(['type' => ['required', Rule::in(['call', 'meeting', 'note', 'task'])], 'subject' => ['required', 'string', 'max:255'], 'body' => ['nullable', 'string', 'max:10000'], 'due_at' => ['nullable', 'date']]);
+        $d = $r->validate(['type' => ['required', Rule::in(['call', 'email', 'meeting', 'note', 'task'])], 'subject' => ['required', 'string', 'max:255'], 'body' => ['nullable', 'string', 'max:10000'], 'due_at' => ['nullable', 'date']]);
         $s->addActivity($lead, $d, $r->user());
 
         return back()->with('success', 'Activity added.');
@@ -251,10 +252,18 @@ class LeadController extends Controller
 
     private function data(Request $r): array
     {
-        $sources = array_keys(config('crm.sources', []));
+        $sources = array_keys($this->sourceOptions($r));
         $data = $r->validate(['first_name' => ['required', 'string', 'max:100'], 'last_name' => ['required', 'string', 'max:100'], 'email' => ['nullable', 'email', 'max:255'], 'phone' => ['nullable', 'string', 'max:50'], 'company_name' => ['nullable', 'string', 'max:255'], 'industry' => ['nullable', 'string', 'max:255'], 'interests' => ['nullable', 'string', 'max:5000'], 'source' => ['required', Rule::in($sources)], 'source_detail' => ['nullable', 'string', 'max:255'], 'next_follow_up_at' => ['nullable', 'date'], 'custom_values' => ['nullable', 'array']]);
         $data['custom_values'] = app(CustomFields::class)->validate($data['custom_values'] ?? []);
 
         return $data;
+    }
+
+    private function sourceOptions(Request $request): array
+    {
+        $configured = config('crm.sources', []);
+        if (! $request->user()?->active_organization_id || ! DB::getSchemaBuilder()->hasTable('crm_lead_sources')) return $configured;
+        $custom = DB::table('crm_lead_sources')->where('organization_id', $request->user()->active_organization_id)->where('is_active', true)->pluck('name', 'key')->all();
+        return $configured + $custom;
     }
 }

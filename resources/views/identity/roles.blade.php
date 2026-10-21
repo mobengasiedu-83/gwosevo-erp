@@ -1,5 +1,6 @@
 <x-layouts.app>
 @include('identity.navigation')
+<div class="page-heading"><div><span class="eyebrow">Administration</span><h1>{{ $section === 'permissions' ? 'Permissions' : 'Roles' }}</h1><p>{{ $section === 'permissions' ? 'Review available capabilities and manage which roles receive them.' : 'Define business roles, assign capabilities and require MFA where appropriate.' }}</p></div></div>
 @if(!config('identity.mfa_required'))<div class="notice">Mandatory authenticator enrollment is currently paused. Role requirements remain saved; existing authenticators still protect sign-in.</div>
 @endif
 <section class="panel"><h2>Create business role</h2><form class="grid-form" method="POST" action="{{ route('identity.roles.store') }}">

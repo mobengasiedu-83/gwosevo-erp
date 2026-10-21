@@ -31,7 +31,9 @@ class StructureController extends Controller
     {
         $organizations = Organization::with('legalEntity')->when(! $request->user()->isSuperAdmin(), fn ($q) => $q->where('is_active', true)->whereHas('users', fn ($q) => $q->where('users.id', $request->user()->id)))->orderBy('name')->get();
 
-        return view('organization.index', compact('organizations'));
+        $section = $request->query('section') === 'departments' ? 'departments' : 'organization';
+
+        return view('organization.index', compact('organizations', 'section'));
     }
 
     public function overview(Request $request)

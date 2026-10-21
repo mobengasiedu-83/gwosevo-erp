@@ -12,5 +12,6 @@
 @if(session('status'))<div class="notice success" role="status">{{ session('status') }}</div>
 @endif
 {{ $slot }}
+<x-turnstile />
 </div><footer class="auth-footer"><span>© {{ now()->year }} GWO SEVO Solutions. All rights reserved.</span><a href="https://gwosevo.com" target="_blank" rel="noopener noreferrer">gwosevo.com ↗</a></footer></main>
 </div></body></html>

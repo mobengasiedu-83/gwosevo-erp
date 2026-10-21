@@ -12,6 +12,7 @@ use App\Models\LeadActivity;
 use App\Models\OpportunityActivity;
 use App\Models\Opportunity;
 use App\Notifications\ContractRenewalNotification;
+use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
@@ -39,7 +40,17 @@ class DashboardController extends Controller
             $activity->where('actor_id', $user->id);
         }
 
+        $workspaceOrganizationId = $user->active_organization_id;
+        $workspaceWidgets = json_decode((string) DB::table('workspace_dashboard_preferences')->where('user_id', $user->id)->value('widgets'), true);
+        $workspaceWidgets = is_array($workspaceWidgets) ? array_values(array_intersect($workspaceWidgets, ['tasks', 'approvals', 'calendar', 'notifications'])) : ['tasks', 'approvals', 'calendar', 'notifications'];
+        $myTaskCount = $workspaceOrganizationId ? DB::table('workspace_tasks')->where('organization_id', $workspaceOrganizationId)->where('assigned_to', $user->id)->where('status', '!=', 'done')->count() : 0;
+        $myOverdueTaskCount = $workspaceOrganizationId ? DB::table('workspace_tasks')->where('organization_id', $workspaceOrganizationId)->where('assigned_to', $user->id)->where('status', '!=', 'done')->where('due_at', '<', now())->count() : 0;
+        $myApprovalCount = $workspaceOrganizationId ? DB::table('automation_approval_steps as s')->join('automation_approval_requests as r', 'r.id', '=', 's.request_id')->where('r.organization_id', $workspaceOrganizationId)->where('s.approver_id', $user->id)->whereColumn('s.stage', 'r.current_stage')->where('s.status', 'pending')->where('r.status', 'pending')->count() : 0;
+        $myEventCount = $workspaceOrganizationId ? DB::table('workspace_calendar_events')->where('organization_id', $workspaceOrganizationId)->where('user_id', $user->id)->whereDate('starts_at', today())->count() : 0;
+
         return view('dashboard', [
+            'myTaskCount' => $myTaskCount, 'myOverdueTaskCount' => $myOverdueTaskCount,
+            'workspaceWidgets' => $workspaceWidgets, 'myApprovalCount' => $myApprovalCount, 'myUnreadCount' => $user->unreadNotifications()->count(), 'myEventCount' => $myEventCount,
             'showCRM' => (bool) $showCRM,
             'contractAlerts' => $contractAlerts,
             'showSales' => (bool) $showSales, 'salesActivities' => $salesActivities, 'salesAlerts' => $salesAlerts,

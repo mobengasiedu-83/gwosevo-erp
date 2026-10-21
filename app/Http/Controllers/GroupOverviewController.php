@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Schema;
 class GroupOverviewController extends Controller
 {
     private const GROUPS = [
-        'commercial' => ['title' => 'Commercial & CRM', 'description' => 'Customer relationships, sales pipeline and commercial activity.'],
+        'commercial' => ['title' => 'Commercial & Sales', 'description' => 'Opportunities, quotations, pricing, contracts and commercial performance.'],
         'customer-experience' => ['title' => 'Customer Experience', 'description' => 'Customer calls, support requests and communications.'],
         'human-resources' => ['title' => 'Human Resources', 'description' => 'People, hiring, attendance and employee development.'],
         'operations-projects' => ['title' => 'Operations & Projects', 'description' => 'Projects, tasks, procurement and operational delivery.'],
@@ -71,12 +71,19 @@ class GroupOverviewController extends Controller
 
         if ($group === 'operations-projects') {
             if ($modules->enabled('projects') && ($user->can('projects.view') || $user->can('projects.manage') || $user->can('projects.tasks.manage'))) {
-                $add('Active projects', $count('projects', $organizationId, "status = ?", ['active']), 'Projects currently underway', 'projects.index');
-                $add('Open tasks', $count('project_tasks', $organizationId, "status NOT IN (?, ?)", ['done', 'cancelled']), 'Tasks not yet completed', 'projects.index');
-            }
-            if ($modules->enabled('procurement') && ($user->isSuperAdmin() || $user->can('procurement.view') || $user->can('procurement.requests.create') || $user->can('procurement.inventory.manage') || $user->can('procurement.assets.manage'))) {
-                $add('Pending purchase requests', $count('procurement_requests', $organizationId, "status = ?", ['pending_approval']), 'Requests waiting for review', 'procurement.index');
-                $add('Purchase orders', $count('procurement_purchase_orders', $organizationId), 'Orders recorded for this organization', 'procurement.index');
+                $projectScope = DB::table('projects as p')->where('p.organization_id', $organizationId);
+                if (! $user->isSuperAdmin() && ! $user->can('projects.manage')) {
+                    $projectScope->where(function ($scope) use ($user) {
+                        $scope->where('p.owner_id', $user->id)
+                            ->orWhereExists(fn ($members) => $members->selectRaw('1')->from('project_members as pm')->whereColumn('pm.project_id', 'p.id')->where('pm.user_id', $user->id))
+                            ->orWhereExists(fn ($tasks) => $tasks->selectRaw('1')->from('project_tasks as pt')->whereColumn('pt.project_id', 'p.id')->where('pt.owner_id', $user->id));
+                    });
+                }
+                $visibleProjectIds = $projectScope->pluck('p.id');
+                $activeProjects = DB::table('projects')->where('organization_id', $organizationId)->whereIn('id', $visibleProjectIds)->where('status', 'active')->count();
+                $openTasks = DB::table('project_tasks')->where('organization_id', $organizationId)->whereIn('project_id', $visibleProjectIds)->whereNotIn('status', ['done', 'cancelled'])->count();
+                $add('Active projects', $activeProjects, 'Projects currently underway', 'projects.index');
+                $add('Open tasks', $openTasks, 'Tasks not yet completed', 'projects.index');
             }
         }
 

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Domain\Administration\AdminAudit;
 use App\Domain\Administration\Modules;
+use App\Domain\Security\Turnstile;
 use App\Models\HrApplication;
 use App\Models\HrAssessmentTemplate;
 use App\Models\HrCandidate;
@@ -120,9 +121,10 @@ class RecruitmentController extends Controller
         return view('recruitment.career',compact('vacancy'));
     }
 
-    public function apply(Request $request,string $slug)
+    public function apply(Request $request,string $slug, Turnstile $turnstile)
     {
         $this->enabled();
+        $turnstile->assertValid($request);
         $vacancy=HrVacancy::where('slug',$slug)->where('status','open')->where(fn($q)=>$q->whereNull('opens_on')->orWhere('opens_on','<=',today()))->where(fn($q)=>$q->whereNull('closes_on')->orWhere('closes_on','>=',today()))->firstOrFail();
         $data=$request->validate(['name'=>['required','string','max:180'],'email'=>['required','email','max:254'],'phone'=>['nullable','string','max:60'],'cover_letter'=>['nullable','string','max:10000'],'resume'=>['nullable','file','mimes:pdf,doc,docx','max:10240'],'consent'=>['accepted']]);
         $candidate=HrCandidate::create(['organization_id'=>$vacancy->organization_id,'profile'=>['name'=>$data['name'],'email'=>$data['email'],'phone'=>$data['phone'] ?? null],'consent_at'=>now()]);

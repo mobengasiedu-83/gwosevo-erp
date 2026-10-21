@@ -4,20 +4,25 @@ use App\Http\Controllers\Admin\AdministrationController;
 use App\Http\Controllers\Admin\ReferenceTransferController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\WorkspaceController;
 use App\Http\Controllers\GroupOverviewController;
 use App\Http\Controllers\LeadController;
+use App\Http\Controllers\CrmWorkspaceController;
 use App\Http\Controllers\Sales\OpportunityController;
 use App\Http\Controllers\Sales\SalesNotificationController;
 use App\Http\Controllers\Commercial\CommercialController;
 use App\Http\Controllers\ContactCentreController;
+use App\Http\Controllers\CustomerExperienceController;
 use App\Http\Controllers\Support\TicketController;
 use App\Http\Controllers\SmsController;
 use App\Http\Controllers\MarketingController;
+use App\Http\Controllers\SocialMediaController;
 use App\Http\Controllers\HrController;
 use App\Http\Controllers\RecruitmentController;
 use App\Http\Controllers\PerformanceController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\ProjectsController;
+use App\Http\Controllers\ProjectWorkspaceController;
 use App\Http\Controllers\FinanceController;
 use App\Http\Controllers\ProcurementController;
 use App\Http\Controllers\KnowledgeController;
@@ -53,8 +58,27 @@ Route::middleware('guest')->group(function () {
 Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
+    Route::put('/workspace/dashboard-preferences', [WorkspaceController::class, 'dashboardPreferencesUpdate'])->name('workspace.dashboard.preferences');
+    Route::prefix('workspace')->name('workspace.')->group(function () {
+        Route::get('/tasks', [WorkspaceController::class, 'tasks'])->name('tasks.index');
+        Route::post('/tasks', [WorkspaceController::class, 'taskStore'])->name('tasks.store');
+        Route::put('/tasks/{task}', [WorkspaceController::class, 'taskUpdate'])->whereNumber('task')->name('tasks.update');
+        Route::post('/tasks/{task}/comments', [WorkspaceController::class, 'taskComment'])->whereNumber('task')->name('tasks.comments.store');
+        Route::get('/approvals', [WorkspaceController::class, 'approvals'])->name('approvals.index');
+        Route::get('/calendar', [WorkspaceController::class, 'calendar'])->name('calendar.index');
+        Route::post('/calendar', [WorkspaceController::class, 'calendarStore'])->name('calendar.store');
+        Route::delete('/calendar/{event}', [WorkspaceController::class, 'calendarDestroy'])->whereNumber('event')->name('calendar.destroy');
+        Route::get('/notifications', [WorkspaceController::class, 'notifications'])->name('notifications.index');
+        Route::get('/notifications/feed', [WorkspaceController::class, 'notificationFeed'])->name('notifications.feed');
+        Route::post('/notifications/{notification}/read', [WorkspaceController::class, 'notificationRead'])->name('notifications.read');
+        Route::delete('/notifications/{notification}', [WorkspaceController::class, 'notificationArchive'])->name('notifications.archive');
+        Route::post('/notifications/preferences', [WorkspaceController::class, 'notificationPreferences'])->name('notifications.preferences');
+        Route::get('/profile', [WorkspaceController::class, 'profile'])->name('profile.edit');
+        Route::put('/profile', [WorkspaceController::class, 'profileUpdate'])->name('profile.update');
+    });
     Route::prefix('reports')->name('reports.')->group(function () {
         Route::get('/', [ReportsController::class, 'index'])->name('index');
+        Route::get('/sections/{section}', [ReportsController::class, 'section'])->whereIn('section', ['executive', 'custom', 'scheduled', 'exports'])->name('sections');
         Route::post('/custom', [ReportsController::class, 'store'])->name('custom.store');
         Route::get('/custom/{report}', [ReportsController::class, 'run'])->whereNumber('report')->name('run');
         Route::get('/custom/{report}/export', [ReportsController::class, 'export'])->whereNumber('report')->name('export');
@@ -95,6 +119,7 @@ Route::middleware('auth')->group(function () {
     });
     Route::prefix('knowledge')->name('knowledge.')->group(function () {
         Route::get('/', [KnowledgeController::class, 'index'])->name('index');
+        Route::get('/sections/{section}', [KnowledgeController::class, 'section'])->whereIn('section', ['documents', 'ai-search', 'sources'])->name('sections');
         Route::get('/analytics', [KnowledgeController::class, 'analytics'])->name('analytics');
         Route::get('/articles/{article}', [KnowledgeController::class, 'show'])->whereNumber('article')->name('articles.show');
         Route::post('/spaces', [KnowledgeController::class, 'createSpace'])->name('spaces.store');
@@ -114,6 +139,7 @@ Route::middleware('auth')->group(function () {
     });
     Route::prefix('procurement')->name('procurement.')->group(function () {
         Route::get('/', [ProcurementController::class, 'index'])->name('index');
+        Route::get('/workspace/{section}', [ProcurementController::class, 'workspace'])->whereIn('section', ['suppliers','requisitions','approvals','rfqs','comparisons','purchase-orders','goods-receipt','supplier-invoices','inventory','asset-register','assignments','maintenance','transfers-disposal','reports'])->name('workspace');
         Route::post('/suppliers', [ProcurementController::class, 'supplierStore'])->name('suppliers.store');
         Route::post('/requests', [ProcurementController::class, 'requestStore'])->name('requests.store');
         Route::put('/requests/{purchaseRequest}/decision', [ProcurementController::class, 'requestDecision'])->whereNumber('purchaseRequest')->name('requests.decision');
@@ -131,6 +157,7 @@ Route::middleware('auth')->group(function () {
     });
     Route::prefix('recruitment')->name('recruitment.')->group(function () {
         Route::get('/', [RecruitmentController::class, 'index'])->name('index');
+        Route::get('/assessments', [RecruitmentController::class, 'index'])->name('assessments');
         Route::post('/requisitions', [RecruitmentController::class, 'requisitionStore'])->name('requisitions.store');
         Route::put('/requisitions/{requisition}/decision', [RecruitmentController::class, 'requisitionDecide'])->whereNumber('requisition')->name('requisitions.decision');
         Route::post('/vacancies', [RecruitmentController::class, 'vacancyStore'])->name('vacancies.store');
@@ -166,6 +193,8 @@ Route::middleware('auth')->group(function () {
     });
     Route::prefix('attendance')->name('attendance.')->group(function () {
         Route::get('/', [AttendanceController::class, 'index'])->name('index');
+        Route::get('/leave', [AttendanceController::class, 'index'])->name('leave');
+        Route::get('/self-service', [AttendanceController::class, 'index'])->name('self-service');
         Route::post('/clock-in', [AttendanceController::class, 'clockIn'])->name('clock-in');
         Route::post('/clock-out', [AttendanceController::class, 'clockOut'])->name('clock-out');
         Route::post('/records', [AttendanceController::class, 'recordStore'])->name('records.store');
@@ -181,6 +210,7 @@ Route::middleware('auth')->group(function () {
     Route::prefix('projects')->name('projects.')->group(function () {
         Route::get('/', [ProjectsController::class, 'index'])->name('index');
         Route::post('/', [ProjectsController::class, 'store'])->name('store');
+        Route::get('/workspace/{section}', [ProjectWorkspaceController::class, 'show'])->whereIn('section', ['tasks', 'milestones', 'timesheets', 'risks', 'deliverables', 'reports'])->name('workspace');
         Route::get('/{project}', [ProjectsController::class, 'show'])->whereNumber('project')->name('show');
         Route::post('/{project}/members', [ProjectsController::class, 'memberStore'])->whereNumber('project')->name('members.store');
         Route::post('/{project}/workstreams', [ProjectsController::class, 'workstreamStore'])->whereNumber('project')->name('workstreams.store');
@@ -206,6 +236,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/tax-codes', [FinanceController::class, 'taxCodes'])->name('tax-codes.index');
         Route::get('/recurring-invoices', [FinanceController::class, 'recurring'])->name('recurring.index');
         Route::get('/approval-limits', [FinanceController::class, 'limits'])->name('limits.index');
+        Route::get('/revenue', [FinanceController::class, 'revenue'])->name('revenue');
+        Route::get('/receivables', [FinanceController::class, 'receivables'])->name('receivables');
         Route::get('/reports', [FinanceController::class, 'reports'])->name('reports');
         Route::get('/export', [FinanceController::class, 'export'])->name('export');
         Route::post('/invoices', [FinanceController::class, 'invoiceStore'])->name('invoices.store');
@@ -236,6 +268,15 @@ Route::middleware('auth')->group(function () {
         Route::post('/categories', [TicketController::class, 'saveCategory'])->name('categories.store');
         Route::put('/categories/{category}', [TicketController::class, 'toggleCategory'])->whereNumber('category')->name('categories.update');
         Route::post('/sla-policies', [TicketController::class, 'saveSla'])->name('sla.store');
+    });
+    Route::prefix('customer-experience')->name('customer-experience.')->group(function () {
+        Route::get('/live-monitoring', [CustomerExperienceController::class, 'liveMonitoring'])->name('live-monitoring');
+        Route::get('/call-records', [CustomerExperienceController::class, 'callRecords'])->name('call-records');
+        Route::get('/recordings', [CustomerExperienceController::class, 'recordings'])->name('recordings');
+        Route::get('/quality-assurance', [CustomerExperienceController::class, 'qualityAssurance'])->name('quality-assurance');
+        Route::get('/sla', [CustomerExperienceController::class, 'sla'])->name('sla');
+        Route::get('/feedback', [CustomerExperienceController::class, 'feedback'])->name('feedback');
+        Route::get('/reports', [CustomerExperienceController::class, 'reports'])->name('reports');
     });
     Route::post('/lead-notifications/{notification}/read', [LeadNotificationController::class, 'read'])->name('lead-notifications.read');
     Route::post('/sales-notifications/{notification}/read', [SalesNotificationController::class, 'read'])->name('sales-notifications.read');
@@ -272,8 +313,41 @@ Route::middleware('auth')->group(function () {
         Route::post('/affiliates', [MarketingController::class, 'affiliate'])->name('affiliates.store');
         Route::post('/consents', [MarketingController::class, 'consent'])->name('consents.store');
     });
+    Route::prefix('social')->name('social.')->group(function () {
+        Route::get('/', [SocialMediaController::class, 'dashboard'])->name('dashboard');
+        Route::get('/accounts', [SocialMediaController::class, 'accounts'])->name('accounts');
+        Route::post('/accounts', [SocialMediaController::class, 'accountStore'])->name('accounts.store');
+        Route::get('/inbox', [SocialMediaController::class, 'inbox'])->name('inbox');
+        Route::post('/inbox/items', [SocialMediaController::class, 'inboxStore'])->name('inbox.items.store');
+        Route::put('/inbox/items/{item}', [SocialMediaController::class, 'inboxUpdate'])->whereNumber('item')->name('inbox.items.update');
+        Route::post('/inbox/items/{item}/reply', [SocialMediaController::class, 'reply'])->whereNumber('item')->name('inbox.items.reply');
+        Route::get('/posts', [SocialMediaController::class, 'posts'])->name('posts');
+        Route::post('/posts', [SocialMediaController::class, 'postStore'])->name('posts.store');
+        Route::post('/posts/{post}/submit', [SocialMediaController::class, 'postSubmit'])->whereNumber('post')->name('posts.submit');
+        Route::post('/posts/{post}/decision', [SocialMediaController::class, 'postDecision'])->whereNumber('post')->name('posts.decision');
+        Route::get('/calendar', [SocialMediaController::class, 'calendar'])->name('calendar');
+        Route::get('/engagement', [SocialMediaController::class, 'engagement'])->name('engagement');
+        Route::get('/leads', [SocialMediaController::class, 'leads'])->name('leads');
+        Route::post('/leads', [SocialMediaController::class, 'leadStore'])->name('leads.store');
+        Route::get('/campaigns', [SocialMediaController::class, 'campaigns'])->name('campaigns');
+        Route::get('/assets', [SocialMediaController::class, 'assets'])->name('assets');
+        Route::post('/assets', [SocialMediaController::class, 'assetStore'])->name('assets.store');
+        Route::get('/assets/{asset}/download', [SocialMediaController::class, 'assetDownload'])->whereNumber('asset')->name('assets.download');
+        Route::get('/listening', [SocialMediaController::class, 'listening'])->name('listening');
+        Route::get('/assignments', [SocialMediaController::class, 'assignments'])->name('assignments');
+        Route::post('/assignments', [SocialMediaController::class, 'assign'])->name('assignments.store');
+        Route::get('/approvals', [SocialMediaController::class, 'approvals'])->name('approvals');
+        Route::get('/analytics', [SocialMediaController::class, 'analytics'])->name('analytics');
+        Route::get('/automation', [SocialMediaController::class, 'automation'])->name('automation');
+        Route::post('/automation', [SocialMediaController::class, 'ruleStore'])->name('automation.store');
+        Route::get('/settings', [SocialMediaController::class, 'settings'])->name('settings');
+        Route::put('/settings', [SocialMediaController::class, 'settingsUpdate'])->name('settings.update');
+    });
     Route::prefix('hr')->name('hr.')->group(function () {
         Route::get('/', [HrController::class, 'index'])->name('index');
+        Route::get('/onboarding', [HrController::class, 'onboarding'])->name('onboarding');
+        Route::get('/training', [HrController::class, 'training'])->name('training');
+        Route::get('/reports', [HrController::class, 'reports'])->name('reports');
         Route::post('/employees', [HrController::class, 'store'])->name('employees.store');
         Route::get('/employees/{employee}', [HrController::class, 'show'])->whereNumber('employee')->name('employees.show');
         Route::put('/employees/{employee}', [HrController::class, 'update'])->whereNumber('employee')->name('employees.update');
@@ -289,6 +363,24 @@ Route::middleware('auth')->group(function () {
         Route::post('/employees/{employee}/training', [HrController::class, 'trainingRecord'])->whereNumber('employee')->name('training.store');
     });
     Route::get('/leads/import', [LeadController::class, 'importPage'])->name('leads.import');
+    Route::get('/crm/accounts', [CrmWorkspaceController::class, 'accounts'])->name('crm.accounts');
+    Route::post('/crm/accounts', [CrmWorkspaceController::class, 'accountStore'])->name('crm.accounts.store');
+    Route::put('/crm/accounts/{account}', [CrmWorkspaceController::class, 'accountUpdate'])->whereNumber('account')->name('crm.accounts.update');
+    Route::get('/crm/contacts', [CrmWorkspaceController::class, 'contacts'])->name('crm.contacts');
+    Route::post('/crm/contacts', [CrmWorkspaceController::class, 'contactStore'])->name('crm.contacts.store');
+    Route::put('/crm/contacts/{contact}', [CrmWorkspaceController::class, 'contactUpdate'])->whereNumber('contact')->name('crm.contacts.update');
+    Route::get('/crm/sources', [CrmWorkspaceController::class, 'sources'])->name('crm.sources');
+    Route::post('/crm/sources', [CrmWorkspaceController::class, 'sourceStore'])->name('crm.sources.store');
+    Route::put('/crm/sources/{source}', [CrmWorkspaceController::class, 'sourceUpdate'])->whereNumber('source')->name('crm.sources.update');
+    Route::get('/crm/segments', [CrmWorkspaceController::class, 'segments'])->name('crm.segments');
+    Route::post('/crm/segments', [CrmWorkspaceController::class, 'segmentStore'])->name('crm.segments.store');
+    Route::delete('/crm/segments/{segment}', [CrmWorkspaceController::class, 'segmentDestroy'])->whereNumber('segment')->name('crm.segments.destroy');
+    Route::get('/crm/segments/{segment}', [CrmWorkspaceController::class, 'segmentShow'])->whereNumber('segment')->name('crm.segments.show');
+    Route::get('/crm/qualification', [CrmWorkspaceController::class, 'qualification'])->name('crm.qualification');
+    Route::get('/crm/interactions', [CrmWorkspaceController::class, 'interactions'])->name('crm.interactions');
+    Route::get('/crm/follow-ups', [CrmWorkspaceController::class, 'followups'])->name('crm.followups');
+    Route::get('/crm/conversion', [CrmWorkspaceController::class, 'conversion'])->name('crm.conversion');
+    Route::get('/crm', [CrmWorkspaceController::class, 'dashboard'])->name('crm.dashboard');
     Route::post('/leads/import/preview', [LeadController::class, 'importPreview'])->name('leads.import.preview');
     Route::post('/leads/import/commit', [LeadController::class, 'importCommit'])->name('leads.import.commit');
     Route::get('/leads/reports', [LeadController::class, 'report'])->name('leads.reports');
@@ -306,6 +398,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/leads/{lead}/activities/{activity}/complete', [LeadController::class, 'completeActivity'])->whereNumber('activity')->name('leads.activities.complete');
     Route::post('/leads/{lead}/activities', [LeadController::class, 'activity'])->name('leads.activities.store');
     Route::get('/opportunities', [OpportunityController::class, 'index'])->name('opportunities.index');
+    Route::get('/opportunities/pipeline', [OpportunityController::class, 'index'])->name('opportunities.pipeline');
     Route::get('/opportunities/create', [OpportunityController::class, 'create'])->name('opportunities.create');
     Route::post('/opportunities', [OpportunityController::class, 'store'])->name('opportunities.store');
     Route::get('/opportunities/reports', [OpportunityController::class, 'report'])->name('opportunities.reports');
@@ -327,6 +420,14 @@ Route::middleware('auth')->group(function () {
     Route::post('/opportunities/{opportunity}/approval-requests', [OpportunityController::class, 'approvalRequest'])->whereNumber('opportunity')->name('opportunities.approvals.store');
     Route::post('/opportunities/{opportunity}/approval-requests/{approval}', [OpportunityController::class, 'approvalDecision'])->whereNumber('opportunity')->whereNumber('approval')->name('opportunities.approvals.decide');
     Route::prefix('commercial')->name('commercial.')->group(function () {
+        Route::get('/', [CommercialController::class, 'dashboard'])->name('dashboard');
+        Route::get('/price-lists', [CommercialController::class, 'priceLists'])->name('price-lists');
+        Route::post('/price-lists', [CommercialController::class, 'priceListStore'])->name('price-lists.store');
+        Route::post('/price-lists/{priceList}/decision', [CommercialController::class, 'priceListDecision'])->whereNumber('priceList')->name('price-lists.decision');
+        Route::get('/discounts', [CommercialController::class, 'discounts'])->name('discounts');
+        Route::get('/onboarding', [CommercialController::class, 'onboarding'])->name('onboarding');
+        Route::get('/renewals', [CommercialController::class, 'renewals'])->name('renewals');
+        Route::get('/campaigns', [MarketingController::class, 'index'])->name('campaigns');
         Route::get('/quotes', [CommercialController::class, 'quotes'])->name('quotes.index');
         Route::post('/renewal-notifications/{notification}/read', [CommercialController::class, 'renewalNotificationRead'])->name('renewal-notifications.read');
         Route::get('/opportunities/{opportunity}/quotes/create', [CommercialController::class, 'quoteCreate'])->whereNumber('opportunity')->name('quotes.create');

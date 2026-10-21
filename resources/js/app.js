@@ -135,5 +135,47 @@ const ui = () => {
         button.setAttribute('aria-pressed', String(reveal));
     }));
     document.querySelectorAll('[data-dismiss-notice]').forEach((button) => button.addEventListener('click', () => button.closest('.notice')?.remove()));
+    const notificationBell = document.querySelector('[data-notification-bell]');
+    const notificationBadge = notificationBell?.querySelector('[data-notification-count]');
+    const notificationToast = document.querySelector('[data-notification-toast]');
+    const notificationToastLink = notificationToast?.querySelector('[data-notification-toast-link]');
+    const notificationToastTitle = notificationToast?.querySelector('[data-notification-toast-title]');
+    const notificationToastBody = notificationToast?.querySelector('[data-notification-toast-body]');
+    let unreadNotifications = Number(notificationBell?.dataset.unread ?? 0);
+    let notificationToastTimer;
+    document.querySelector('[data-notification-toast-close]')?.addEventListener('click', () => { notificationToast.hidden = true; });
+    const refreshNotifications = async () => {
+        if (!notificationBell || document.visibilityState === 'hidden') return;
+        try {
+            const response = await fetch(notificationBell.dataset.feedUrl, { credentials: 'same-origin', headers: { Accept: 'application/json' }, cache: 'no-store' });
+            if (!response.ok) return;
+            const data = await response.json();
+            const count = Number(data.unread ?? 0);
+            if (notificationBadge) {
+                notificationBadge.textContent = count > 99 ? '99+' : String(count);
+                notificationBadge.hidden = count === 0;
+            }
+            if (count > unreadNotifications && notificationToast && Array.isArray(data.items)) {
+                const newest = data.items.find((item) => item.unread);
+                if (newest) {
+                    notificationToastTitle.textContent = newest.title || 'New notification';
+                    notificationToastBody.textContent = newest.body || '';
+                    try {
+                        const target = new URL(newest.url || notificationBell.href, window.location.origin);
+                        notificationToastLink.href = target.origin === window.location.origin ? target.href : notificationBell.href;
+                    } catch { notificationToastLink.href = notificationBell.href; }
+                    notificationToast.hidden = false;
+                    clearTimeout(notificationToastTimer);
+                    notificationToastTimer = setTimeout(() => { notificationToast.hidden = true; }, 9000);
+                }
+            }
+            unreadNotifications = count;
+            notificationBell.dataset.unread = String(count);
+        } catch { /* Notification polling is optional; the inbox remains available. */ }
+    };
+    if (notificationBell) {
+        window.setInterval(refreshNotifications, 30000);
+        document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') refreshNotifications(); });
+    }
 };
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', ui); else ui();

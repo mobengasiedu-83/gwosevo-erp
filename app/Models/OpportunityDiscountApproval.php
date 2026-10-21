@@ -11,4 +11,5 @@ class OpportunityDiscountApproval extends Model
     protected function casts(): array { return ['discount_percent' => 'decimal:2', 'decided_at' => 'datetime']; }
     public function requester(): BelongsTo { return $this->belongsTo(User::class, 'requested_by'); }
     public function decider(): BelongsTo { return $this->belongsTo(User::class, 'decided_by'); }
+    public function opportunity(): BelongsTo { return $this->belongsTo(Opportunity::class, 'opportunity_id'); }
 }

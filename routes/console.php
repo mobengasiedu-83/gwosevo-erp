@@ -29,6 +29,31 @@ use Illuminate\Support\Facades\Schedule;
 
 Schedule::command('tickets:check-sla')->everyFiveMinutes()->withoutOverlapping();
 
+Artisan::command('workspace:send-reminders', function () {
+    $sent = 0;
+    DB::table('workspace_calendar_events')->whereNotNull('reminder_at')->whereNull('reminder_sent_at')->where('reminder_at', '<=', now())
+        ->orderBy('id')->chunkById(100, function ($events) use (&$sent) {
+            foreach ($events as $event) {
+                DB::transaction(function () use ($event, &$sent) {
+                    $locked = DB::table('workspace_calendar_events')->where('id', $event->id)->whereNull('reminder_sent_at')->lockForUpdate()->first();
+                    if (! $locked) return;
+                    $user = User::whereKey($locked->user_id)->where('status', 'active')->first();
+                    if ($user) {
+                        $preference = DB::table('automation_preferences')->where('organization_id', $locked->organization_id)
+                            ->where('user_id', $user->id)->where('event_key', 'workspace.calendar.reminder')->first();
+                        if ($preference?->in_app ?? true) {
+                            $user->notify(new AutomationNotification('Calendar reminder', $locked->title, route('workspace.calendar.index'), 'workspace.calendar.reminder', (int) $locked->organization_id));
+                        }
+                    }
+                    DB::table('workspace_calendar_events')->where('id', $locked->id)->update(['reminder_sent_at' => now(), 'updated_at' => now()]);
+                    $sent++;
+                });
+            }
+        });
+    $this->info("Sent {$sent} workspace reminder(s).");
+})->purpose('Send due personal workspace calendar reminders');
+Schedule::command('workspace:send-reminders')->everyMinute()->withoutOverlapping();
+
 Artisan::command('sms:dispatch-scheduled', function () {
     $dispatchedCampaigns = 0;
     SmsCampaign::where('status', 'scheduled')->whereNotNull('scheduled_at')->where('scheduled_at', '<=', now())

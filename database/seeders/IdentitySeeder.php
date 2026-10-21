@@ -14,6 +14,7 @@ class IdentitySeeder extends Seeder
         $ticketPermissions = ['tickets.view', 'tickets.create', 'tickets.update', 'tickets.assign', 'tickets.reply', 'tickets.internal', 'tickets.manage', 'tickets.reports', 'tickets.portal'];
         $smsPermissions = ['sms.view', 'sms.send', 'sms.manage', 'sms.consent.manage', 'sms.campaigns.manage'];
         $marketingPermissions = ['marketing.view', 'marketing.manage', 'marketing.tasks.manage', 'marketing.consent.manage', 'marketing.landing_pages.manage', 'marketing.affiliates.manage', 'marketing.reports.view'];
+        $socialPermissions = ['social.view','social.accounts.manage','social.inbox.manage','social.posts.manage','social.posts.approve','social.leads.capture','social.assets.manage','social.assignments.manage','social.rules.manage','social.settings.manage','social.analytics.view'];
         $hrPermissions = ['hr.view','hr.manage','hr.sensitive.view','hr.sensitive.manage','hr.contracts.manage','hr.documents.view','hr.documents.manage','hr.cases.view','hr.cases.manage','hr.training.manage','hr.reports.view'];
         $recruitmentPermissions = ['recruitment.view','recruitment.manage','recruitment.requisitions.approve','recruitment.applications.view','recruitment.applications.manage','recruitment.interviews.manage','recruitment.assessments.manage','recruitment.offers.manage','recruitment.offers.approve','recruitment.hire','recruitment.reports.view'];
         $performancePermissions = ['performance.view','performance.manage','performance.reviews.self','performance.reviews.manager','performance.reviews.approve','performance.calibrate','performance.kpis.manage','performance.feedback.manage','performance.feedback.respond','performance.plans.manage','performance.reports.view'];
@@ -26,17 +27,19 @@ class IdentitySeeder extends Seeder
         $automationPermissions = ['automation.view','automation.approve','automation.manage'];
         $integrationPermissions = ['integrations.view','integrations.manage','integrations.tokens.manage','integrations.health.check'];
         $securityPermissions = ['security.view','security.manage','security.incidents.manage','security.backups.manage','security.retention.manage'];
-        $permissions = ['leads.view', 'leads.create', 'leads.update', 'leads.archive', 'leads.export', 'leads.approve', 'leads.assign', 'leads.qualify', 'leads.convert', 'leads.disqualify', 'leads.import', 'leads.reports.view', 'leads.rules.manage', 'leads.duplicate.review', 'opportunities.view', 'opportunities.create', 'opportunities.update', 'opportunities.assign', 'opportunities.approve', 'opportunities.catalog.manage', 'opportunities.targets.manage', 'opportunities.reports.view', 'quotes.view', 'quotes.create', 'quotes.update', 'quotes.approve', 'contracts.view', 'contracts.create', 'contracts.update', 'contracts.templates.manage', 'contracts.onboarding.manage', 'contracts.handover', 'contracts.portal.manage', 'calls.view', 'calls.disposition', 'calls.configure', 'calls.dial', 'calls.recordings.view', 'calls.supervise', 'calls.qa.manage', ...$ticketPermissions, ...$smsPermissions, ...$marketingPermissions, ...$hrPermissions, ...$recruitmentPermissions, ...$performancePermissions, ...$attendancePermissions, ...$projectPermissions, ...$financePermissions, ...$procurementPermissions, ...$knowledgePermissions, ...$reportPermissions, ...$automationPermissions, ...$integrationPermissions, ...$securityPermissions];
+        $commercialPermissions = ['commercial.view', 'commercial.prices.manage', 'commercial.prices.approve', 'commercial.discounts.view'];
+        $permissions = ['leads.view', 'leads.create', 'leads.update', 'leads.archive', 'leads.export', 'leads.approve', 'leads.assign', 'leads.qualify', 'leads.convert', 'leads.disqualify', 'leads.import', 'leads.reports.view', 'leads.rules.manage', 'leads.duplicate.review', 'opportunities.view', 'opportunities.create', 'opportunities.update', 'opportunities.assign', 'opportunities.approve', 'opportunities.catalog.manage', 'opportunities.targets.manage', 'opportunities.reports.view', 'quotes.view', 'quotes.create', 'quotes.update', 'quotes.approve', 'contracts.view', 'contracts.create', 'contracts.update', 'contracts.templates.manage', 'contracts.onboarding.manage', 'contracts.handover', 'contracts.portal.manage', 'calls.view', 'calls.disposition', 'calls.configure', 'calls.dial', 'calls.recordings.view', 'calls.supervise', 'calls.qa.manage', ...$commercialPermissions, ...$ticketPermissions, ...$smsPermissions, ...$marketingPermissions, ...$socialPermissions, ...$hrPermissions, ...$recruitmentPermissions, ...$performancePermissions, ...$attendancePermissions, ...$projectPermissions, ...$financePermissions, ...$procurementPermissions, ...$knowledgePermissions, ...$reportPermissions, ...$automationPermissions, ...$integrationPermissions, ...$securityPermissions];
         foreach ($permissions as $permission) {
             Permission::findOrCreate($permission, 'web');
         }
         app(PermissionRegistrar::class)->forgetCachedPermissions();
         foreach ([
             'Administrator' => $permissions,
-            'Sales' => ['leads.view', 'opportunities.view', 'opportunities.create', 'opportunities.update', 'opportunities.assign', 'opportunities.reports.view', 'quotes.view', 'quotes.create', 'quotes.update', 'contracts.view', 'contracts.create', 'contracts.update', 'contracts.onboarding.manage', 'contracts.handover', 'contracts.portal.manage'],
-            'Finance' => ['leads.view', 'opportunities.view', 'opportunities.approve', 'opportunities.reports.view', 'quotes.view', 'quotes.approve', 'contracts.view'],
+            'Sales' => ['leads.view', 'opportunities.view', 'opportunities.create', 'opportunities.update', 'opportunities.assign', 'opportunities.reports.view', 'opportunities.catalog.manage', 'opportunities.targets.manage', 'quotes.view', 'quotes.create', 'quotes.update', 'contracts.view', 'contracts.create', 'contracts.update', 'contracts.onboarding.manage', 'contracts.handover', 'contracts.portal.manage', 'commercial.view', 'commercial.prices.manage', 'commercial.discounts.view'],
+            'Finance' => ['leads.view', 'opportunities.view', 'opportunities.approve', 'opportunities.reports.view', 'quotes.view', 'quotes.approve', 'contracts.view', 'commercial.view', 'commercial.prices.approve', 'commercial.discounts.view'],
             'Procurement' => $procurementPermissions,
             'Knowledge Manager' => $knowledgePermissions,
+            'Social Media Manager' => [...$socialPermissions, 'leads.view', 'leads.create'],
             'Read Only' => ['leads.view', 'opportunities.view'],
             'Support' => ['calls.view', 'calls.disposition'],
             'Operations' => ['leads.view', 'calls.view', 'calls.disposition', 'calls.supervise', 'contracts.view', 'contracts.onboarding.manage', 'contracts.handover'],
@@ -49,7 +52,10 @@ class IdentitySeeder extends Seeder
         // Add newly registered permissions to built-in roles without removing administrator custom grants.
         foreach ([
             'Administrator' => $permissions,
+            'Sales' => ['commercial.view', 'commercial.prices.manage', 'commercial.discounts.view', 'opportunities.catalog.manage', 'opportunities.targets.manage'],
+            'Finance' => ['commercial.view', 'commercial.prices.approve', 'commercial.discounts.view'],
             'Knowledge Manager' => $knowledgePermissions,
+            'Social Media Manager' => [...$socialPermissions, 'leads.view', 'leads.create'],
             'Support' => ['tickets.view', 'tickets.create', 'tickets.update', 'tickets.assign', 'tickets.reply', 'tickets.internal', 'tickets.manage', 'tickets.reports', 'tickets.portal'],
             'Operations' => ['tickets.view', 'tickets.create', 'tickets.update', 'tickets.assign', 'tickets.reply', 'tickets.internal', 'tickets.reports', 'projects.view','projects.tasks.manage','projects.tasks.assign','projects.comments','projects.attachments','projects.time.manage','projects.reports.view'],
             'Finance' => ['finance.view','finance.invoices.manage','finance.approve','finance.payments.manage','finance.credits.manage','finance.expenses.manage','finance.expenses.approve','finance.budgets.manage','finance.taxes.manage','finance.limits.manage','finance.reports.view','finance.export','finance.recurring.manage'],

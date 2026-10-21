@@ -3,6 +3,8 @@
 **Edition:** 20 October 2026 · **Audience:** staff, supervisors, reviewers and administrators
 **Application:** <https://localhost/gwosevo-erp/public/>
 
+The supplied top-level menu uses its own numbering. Top-level Module 1 is [Workspace](../module-one-workspace.md), Module 2 is [CRM & Customer Management](../module-two-crm.md), Module 3 is [Social Media Management](../module-three-social-media.md), Module 4 is [Commercial & Sales](../top-level-module-four-commercial-sales.md), Module 5 is [Customer Experience](../top-level-module-five-customer-experience.md), Module 6 is [Human Resources](../top-level-module-six-human-resources.md), Module 7 is [Operations & Projects](../top-level-module-seven-operations-projects.md), Module 8 is [Procurement & Assets](../top-level-module-eight-procurement-assets.md), Module 9 is [Finance](../top-level-module-nine-finance.md), Module 10 is [Knowledge & Intelligence](../top-level-module-ten-knowledge-intelligence.md), and Module 11 is [Administration](../top-level-module-eleven-administration.md). These are distinct from the older sequential catalogue numbers.
+
 This guide describes the application currently installed in this repository. Modules 01–22 are installed within the commissioning boundaries described here. Their feature catalogue is included in the [module roadmap](module-roadmap.md). See the [Module 18 knowledge bank guide](../module-eighteen.md), [Module 19 reporting guide](../module-nineteen.md), [Module 20 notifications and approvals guide](../module-twenty.md), [Module 21 integration and API guide](../module-twenty-one.md), and [Module 22 security and continuity guide](../module-twenty-two.md) for setup and operational boundaries.
 
 The names “superadmin” and “Administrator” refer here to the existing Administrator account/role. This guide contains no account passwords, invitation tokens or integration secrets.
@@ -362,6 +364,8 @@ Structure changes are audited under **System configuration → Audit history**.
 
 ## Module 04 — CRM and lead management
 
+The CRM and Customer Management top-level menu now brings these lead workflows together with account and contact directories, source management, saved segments, qualification queues, interactions, follow-ups and conversion. See the [Top-Level Module 2 guide](../module-two-crm.md) for the complete menu and local setup.
+
 **Status:** Installed. Open Commercial → **CRM leads**. All lead lists, reports, imports, duplicate candidates and actions use your active organization and record-access scope.
 
 ### Capture a lead
@@ -575,6 +579,8 @@ The module does not include client billing, automatic dependency-based schedulin
 
 ## Module 16 — Finance and revenue
 
+In the supplied top-level menu, Finance is **Module 9**. The top-level implementation and operating boundaries are documented in the [Module 9 Finance guide](../top-level-module-nine-finance.md).
+
 **Status:** Installed locally. Open Finance → **Finance & billing**. All data and number sequences are scoped to the active organization. Administrator/superadmin has all module access; the Finance role has invoice, payment, credit, expense, budget, tax, approval-limit and report permissions. Users can submit their own expense claims without broad finance access. Check organization membership and assigned roles before use.
 
 Create an invoice draft with a customer, dates, currency, service/department and up to three line items in the page form. Each line can use an active organization tax code. The current UI computes a flat percentage tax, either included in or added to price. Add more than three lines only by extending the form; the endpoint currently accepts up to 25. Submit the draft for independent approval. The requester cannot approve their own invoice. Configured limits apply by approver role and currency; when limits exist, an approver needs a matching role limit. Issue approved invoices to start receivables tracking. The module does not email invoices or create invoice PDFs.
@@ -600,6 +606,8 @@ Register assets with acquisition details, location and employee custody. Update 
 The spend summary groups purchase orders by currency. **Boundaries:** this is an operational purchasing and asset register, not an accounting or depreciation ledger. It does not compare supplier quotations, enforce budgets, create Finance invoices automatically, provide a supplier portal, scan barcodes, run stocktakes or send supplier communications. Review purchasing limits, independent approval, stock procedures and custody records before production use. See the [Module 17 operations guide](../module-seventeen.md).
 
 ## Module 18 — Knowledge bank and AI search
+
+In the supplied top-level menu, Knowledge & Intelligence is **Module 10**. The top-level menu and implementation boundaries are documented in the [Module 10 guide](../top-level-module-ten-knowledge-intelligence.md).
 
 **Status:** Installed locally. Open **Knowledge & Intelligence → Knowledge Bank & AI Search**. The module stores organization-scoped knowledge spaces, reviewed articles and private documents. Search returns published articles from spaces you can access. See the [Module 18 guide](../module-eighteen.md) for permission setup, AI and SharePoint configuration, and operational limits.
 
@@ -700,6 +708,6 @@ Current development choices are `IDENTITY_MFA_REQUIRED=false` and `ENTRA_ENABLED
 
 Run host scheduler/queue services when commissioning, verify real mail delivery and Microsoft tenant authentication, and arrange backups/restore checks and business acceptance. Application installation alone does not certify those operations. Existing credentials must be preserved; never run `migrate:fresh` against the existing installation.
 
-Further implementation references: [installation review](../module-installation-review.md), [Module 01](../module-one.md), [Module 02](../module-two.md), [Module 03](../module-three.md), [Module 04](../module-four.md), [Module 05](../module-five.md), [Module 06](../module-six.md), [Module 07](../module-seven.md), and [module roadmap](module-roadmap.md).
+Further implementation references: [installation review](../module-installation-review.md), [Module 01](../module-one.md), [Module 02](../module-two.md), [Module 03](../module-three.md), [Module 04](../module-four.md), [Module 05](../module-five.md), [Module 06](../module-six.md), [Module 07](../module-seven.md), [top-level Module 4 — Commercial & Sales](../top-level-module-four-commercial-sales.md), [top-level Module 5 — Customer Experience](../top-level-module-five-customer-experience.md), and [module roadmap](module-roadmap.md).
 
 **Guide maintenance:** update this guide and its roadmap when modules, labels, permissions, limits or external configuration change. It reflects repository behavior at the edition date, not a guarantee that all future specification requirements are implemented.

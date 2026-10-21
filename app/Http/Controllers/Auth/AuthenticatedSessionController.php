@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Domain\Identity\IdentityAudit;
 use App\Domain\Identity\LoginFlow;
+use App\Domain\Security\Turnstile;
 use App\Http\Controllers\Controller;
 use App\Models\IdentitySession;
 use App\Models\User;
@@ -20,8 +21,9 @@ class AuthenticatedSessionController extends Controller
         return view('auth.login');
     }
 
-    public function store(Request $request, LoginFlow $flow)
+    public function store(Request $request, LoginFlow $flow, Turnstile $turnstile)
     {
+        $turnstile->assertValid($request);
         $data = $request->validate(['email' => ['required', 'email', 'max:255'], 'password' => ['required', 'string', 'max:1000']]);
         $email = mb_strtolower(trim($data['email']));
         $key = 'login:'.hash('sha256', $email.'|'.$request->ip());

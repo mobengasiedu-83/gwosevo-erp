@@ -31,6 +31,8 @@ class FinanceController extends Controller
     public function recurring(Request $request) { return $this->showSection($request, 'recurring'); }
     public function limits(Request $request) { return $this->showSection($request, 'limits'); }
     public function reports(Request $request) { return $this->showSection($request, 'reports'); }
+    public function revenue(Request $request) { return $this->showSection($request, 'revenue'); }
+    public function receivables(Request $request) { return $this->showSection($request, 'receivables'); }
 
     private function showSection(Request $request, string $section)
     {
@@ -40,7 +42,7 @@ class FinanceController extends Controller
             'credits' => 'finance.credits.manage', 'expenses' => 'finance.expenses.manage',
             'budgets' => 'finance.budgets.manage', 'tax-codes' => 'finance.taxes.manage',
             'recurring' => 'finance.recurring.manage', 'limits' => 'finance.limits.manage',
-            'reports' => 'finance.reports.view', default => 'finance.view',
+            'reports', 'revenue', 'receivables' => 'finance.reports.view', default => 'finance.view',
         };
         $overviewAccess = $section === 'overview' && (
             $this->canDo($request, 'finance.invoices.manage') || $this->canDo($request, 'finance.expenses.manage') ||
@@ -57,16 +59,21 @@ class FinanceController extends Controller
         $taxCodes=DB::table('finance_tax_codes')->where('organization_id',$org->id)->orderBy('code')->get();$budgets=DB::table('finance_budgets')->where('organization_id',$org->id)->where('status','active')->orderBy('starts_on')->get();
         foreach($budgets as $budget){$q=DB::table('finance_invoices')->where('organization_id',$org->id)->where('currency',$budget->currency)->whereIn('status',['issued','part_paid','paid','overdue'])->whereBetween('invoice_date',[$budget->starts_on,$budget->ends_on]);if($budget->department_name)$q->where('department_name',$budget->department_name);if($budget->service_name)$q->where('service_name',$budget->service_name);$budget->actual=(float)$q->sum('total');$budget->variance=(float)$budget->amount-$budget->actual;}
         $recurring=DB::table('finance_recurring_schedules')->where('organization_id',$org->id)->orderBy('next_invoice_on')->get();$limits=DB::table('finance_approval_limits')->where('organization_id',$org->id)->orderBy('role_name')->get();
-        $receivables=[];$overdueCount=0;
+        $receivables=[];$receivablesByCurrency=[];$overdueCount=0;
         $open=DB::table('finance_invoices')->where('organization_id',$org->id)->whereIn('status',['issued','part_paid','overdue'])->get();
         foreach($open as $invoice){
             $paid=(float)DB::table('finance_payment_allocations as a')->join('finance_payments as p','p.id','=','a.payment_id')->where('a.invoice_id',$invoice->id)->where('p.status','posted')->sum('a.amount');
             $credits=(float)DB::table('finance_credit_notes')->where('invoice_id',$invoice->id)->where('status','issued')->sum('total');$balance=max(0,(float)$invoice->total-$paid-$credits);
-            if($invoice->due_date<today()->toDateString())$overdueCount++;
-            $receivables[$invoice->currency]??=['total'=>0,'current'=>0,'days_1_30'=>0,'days_31_60'=>0,'days_61_90'=>0,'days_90_plus'=>0];
-            $due=\Illuminate\Support\Carbon::parse($invoice->due_date)->startOfDay();$days=$due->lt(today())?$due->diffInDays(today()):0;$bucket=$days===0?'current':($days<=30?'days_1_30':($days<=60?'days_31_60':($days<=90?'days_61_90':'days_90_plus')));$receivables[$invoice->currency]['total']+=$balance;$receivables[$invoice->currency][$bucket]+=$balance;
+            $dueDate = \Illuminate\Support\Carbon::parse($invoice->due_date)->startOfDay();
+            $daysOverdue = $dueDate->lt(today()->startOfDay()) ? (int) $dueDate->diffInDays(today()->startOfDay()) : 0;
+            if($daysOverdue > 0)$overdueCount++;
+            $receivables[] = (object) ['reference' => $invoice->reference, 'customer_name' => $invoice->customer_name, 'currency' => $invoice->currency, 'invoice_date' => $invoice->invoice_date, 'due_date' => $invoice->due_date, 'total' => (float) $invoice->total, 'balance' => $balance, 'days_overdue' => $daysOverdue, 'status' => $invoice->status];
+            $receivablesByCurrency[$invoice->currency] ??= ['total'=>0,'current'=>0,'days_1_30'=>0,'days_31_60'=>0,'days_61_90'=>0,'days_90_plus'=>0];
+            $bucket=$daysOverdue===0?'current':($daysOverdue<=30?'days_1_30':($daysOverdue<=60?'days_31_60':($daysOverdue<=90?'days_61_90':'days_90_plus')));
+            $receivablesByCurrency[$invoice->currency]['total'] += $balance;
+            $receivablesByCurrency[$invoice->currency][$bucket] += $balance;
         }
-        $receivablesByCurrency=$receivables?:['GHS'=>['total'=>0,'current'=>0,'days_1_30'=>0,'days_31_60'=>0,'days_61_90'=>0,'days_90_plus'=>0]];
+        if (!$receivablesByCurrency) $receivablesByCurrency = ['GHS'=>['total'=>0,'current'=>0,'days_1_30'=>0,'days_31_60'=>0,'days_61_90'=>0,'days_90_plus'=>0]];
         $invoiceTotals=DB::table('finance_invoices')->where('organization_id',$org->id)->whereIn('status',['issued','part_paid','paid','overdue'])->selectRaw('currency, sum(total) as amount')->groupBy('currency')->orderBy('currency')->get();
         $collectionTotals=DB::table('finance_payments')->where('organization_id',$org->id)->where('status','posted')->selectRaw('currency, sum(amount) as amount')->groupBy('currency')->orderBy('currency')->get();
         $currency=$invoices->first()->currency??'GHS';$metrics=['expenses_pending'=>DB::table('finance_expenses')->where('organization_id',$org->id)->where('status','pending_approval')->count(),'overdue_invoices'=>$overdueCount];
@@ -82,6 +89,8 @@ class FinanceController extends Controller
             'recurring' => ['Recurring invoices', 'Manage schedules that create invoice drafts.'],
             'limits' => ['Approval limits', 'Set currency limits for invoice approvers.'],
             'reports' => ['Revenue & reports', 'Review receivables, collections and revenue by client.'],
+            'revenue' => ['Revenue', 'Review billed revenue by client, service and department for the current year.'],
+            'receivables' => ['Receivables', 'Review open customer balances and aging by due date.'],
         ];
         $sectionMeta = $sectionMetaBySection[$section] ?? $sectionMetaBySection['overview'];
         $sectionSummary = match ($section) {
@@ -94,9 +103,11 @@ class FinanceController extends Controller
             'recurring' => [['Schedules', $recurring->count()], ['Active', $recurring->where('is_active', true)->count()], ['Due', $recurring->where('next_invoice_on', '<=', today()->toDateString())->where('is_active', true)->count()]],
             'limits' => [['Configured limits', $limits->count()], ['Pending approvals', $invoices->where('status','pending_approval')->count()]],
             'reports' => [['Open receivables', collect($receivablesByCurrency)->map(fn ($row, $ccy) => $ccy.' '.number_format($row['total'], 2))->join(' · ')], ['Overdue invoices', $metrics['overdue_invoices']], ['Revenue rows', $revenue->count()]],
+            'revenue' => [['Revenue groups', $revenue->count()], ['Billed invoices', $invoices->whereIn('status', ['issued','part_paid','paid','overdue'])->count()], ['Current-year basis', today()->year]],
+            'receivables' => [['Open invoices', count($receivables)], ['Overdue invoices', $metrics['overdue_invoices']], ['Outstanding', collect($receivablesByCurrency)->map(fn ($row, $ccy) => $ccy.' '.number_format($row['total'], 2))->join(' · ')]],
             default => [['Issued invoices', $invoiceTotals->map(fn ($row) => $row->currency.' '.number_format($row->amount, 2))->join(' · ') ?: '—'], ['Payments collected', $collectionTotals->map(fn ($row) => $row->currency.' '.number_format($row->amount, 2))->join(' · ') ?: '—'], ['Open receivables', collect($receivablesByCurrency)->map(fn ($row, $ccy) => $ccy.' '.number_format($row['total'], 2))->join(' · ')], ['Overdue invoices', $metrics['overdue_invoices']], ['Claims awaiting approval', $metrics['expenses_pending']]],
         };
-        return view('finance.index',compact('org','section','sectionMeta','sectionSummary','invoices','payments','expenses','credits','taxCodes','budgets','recurring','limits','receivablesByCurrency','invoiceTotals','collectionTotals','metrics','revenue','currency'));
+        return view('finance.index',compact('org','section','sectionMeta','sectionSummary','invoices','payments','expenses','credits','taxCodes','budgets','recurring','limits','receivables','receivablesByCurrency','invoiceTotals','collectionTotals','metrics','revenue','currency'));
     }
 
     private function invoiceFor(Request $r,Organization $org,int $id){return DB::table('finance_invoices')->where('organization_id',$org->id)->where('id',$id)->first()?:abort(404);}

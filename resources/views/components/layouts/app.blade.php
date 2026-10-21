@@ -1,12 +1,14 @@
 @php
 $navigation = app(\App\Support\WorkspaceNavigation::class)->groups(auth()->user());
 $currentLabel = 'Workspace';
+$matchesNavigationLink = fn ($link) => request()->routeIs($link['match']) && collect($link['parameters'] ?? [])->every(fn ($value, $key) => (string) (request()->route($key) ?? request()->query($key)) === (string) $value);
 foreach ($navigation as $links) {
     foreach ($links as $link) {
-        if (request()->routeIs($link['match']) && (empty($link['parameters']) || request()->route('group') === ($link['parameters']['group'] ?? null))) { $currentLabel = $link['label']; }
+        if ($matchesNavigationLink($link)) { $currentLabel = $link['label']; }
     }
 }
 $switchableOrganizations = auth()->user()->hasRole('Administrator') ? \App\Models\Organization::where('is_active',true)->get() : auth()->user()->organizations()->where('organizations.is_active',true)->get();
+$unreadNotificationCount = auth()->user()->unreadNotifications()->count();
 @endphp
 <!doctype html>
 <html lang="en">
@@ -28,10 +30,10 @@ $switchableOrganizations = auth()->user()->hasRole('Administrator') ? \App\Model
 <div class="workspace-chip"><span class="workspace-chip-mark">G</span><div><strong>{{ auth()->user()->activeOrganization?->name ?: $erpSettings->get('company_name') }}</strong><small>Staff workspace</small></div><span class="connection-dot" title="Signed in"></span></div>
 <nav class="sidebar-navigation" data-nav-user="{{ auth()->id() }}">
 @foreach($navigation as $group => $links)
-<details class="nav-group" @if(collect($links)->contains(fn($link) => request()->routeIs($link['match']) && (empty($link['parameters']) || request()->route('group') === ($link['parameters']['group'] ?? null)))) open @endif data-nav-group="{{ $group }}"><summary class="nav-group-label">{{ $group }}<x-ui.icon name="chevron" /></summary><div class="nav-group-links">
+<details class="nav-group" @if(collect($links)->contains($matchesNavigationLink)) open @endif data-nav-group="{{ $group }}"><summary class="nav-group-label">{{ $group }}<x-ui.icon name="chevron" /></summary><div class="nav-group-links">
 @foreach($links as $link)
-<a class="sidebar-link {{ request()->routeIs($link['match']) && (empty($link['parameters']) || request()->route('group') === ($link['parameters']['group'] ?? null)) ? 'is-active' : '' }} {{ !empty($link['child']) ? 'is-submenu-link' : '' }}" href="{{ route($link['route'], $link['parameters'] ?? []) }}"
-@if(request()->routeIs($link['match']) && (empty($link['parameters']) || request()->route('group') === ($link['parameters']['group'] ?? null))) aria-current="page"
+<a class="sidebar-link is-submenu-link {{ $matchesNavigationLink($link) ? 'is-active' : '' }}" href="{{ route($link['route'], $link['parameters'] ?? []) }}"
+@if($matchesNavigationLink($link)) aria-current="page"
 @endif title="{{ $link['label'] }}" data-navigation-label="{{ $link['label'] }}"><x-ui.icon :name="$link['icon']" /><span>{{ $link['label'] }}</span>
 @if(request()->routeIs($link['match']))<span class="nav-active-dot"></span>
 @endif</a>
@@ -46,9 +48,10 @@ $switchableOrganizations = auth()->user()->hasRole('Administrator') ? \App\Model
 <div class="workspace-frame">
 <header class="workspace-topbar">
 <div class="topbar-location"><button class="icon-button sidebar-collapse" data-sidebar-toggle aria-label="Collapse sidebar" aria-controls="workspace-sidebar" aria-expanded="true"><x-ui.icon name="menu" /></button><button class="icon-button mobile-menu" data-sidebar-open aria-label="Open navigation" aria-controls="workspace-sidebar" aria-expanded="false"><x-ui.icon name="menu" /></button><span class="breadcrumb-home">Workspace</span><x-ui.icon name="chevron" /><strong>{{ $currentLabel }}</strong></div>
-<div class="topbar-actions"><button class="quick-search" data-command-open><x-ui.icon name="search" /><span>Quick navigation</span><kbd>⌘ K</kbd></button><a class="icon-button" href="{{ route('identity.reviews.index') }}" aria-label="My access reviews"><x-ui.icon name="file" /></a><details class="account-menu"><summary><span class="user-avatar">{{ mb_strtoupper(mb_substr(auth()->user()->name,0,1)) }}</span><span class="account-summary"><strong>{{ auth()->user()->name }}</strong><small>{{ auth()->user()->roles->first()?->name ?: 'Staff member' }}</small></span><x-ui.icon name="chevron" /></summary><div class="account-popover"><p>{{ auth()->user()->email }}</p><a href="{{ route('security.index') }}"><x-ui.icon name="shield" />My security</a><form method="POST" action="{{ route('logout') }}">
+<div class="topbar-actions"><button class="quick-search" data-command-open><x-ui.icon name="search" /><span>Quick navigation</span><kbd>⌘ K</kbd></button><a class="icon-button notification-bell" href="{{ route('workspace.notifications.index') }}" aria-label="Notifications" data-notification-bell data-feed-url="{{ route('workspace.notifications.feed') }}" data-unread="{{ $unreadNotificationCount }}"><x-ui.icon name="bell" /><span data-notification-count @if(!$unreadNotificationCount) hidden @endif>{{ $unreadNotificationCount }}</span></a><a class="icon-button" href="{{ route('identity.reviews.index') }}" aria-label="My access reviews"><x-ui.icon name="file" /></a><details class="account-menu"><summary><span class="user-avatar">{{ mb_strtoupper(mb_substr(auth()->user()->name,0,1)) }}</span><span class="account-summary"><strong>{{ auth()->user()->name }}</strong><small>{{ auth()->user()->roles->first()?->name ?: 'Staff member' }}</small></span><x-ui.icon name="chevron" /></summary><div class="account-popover"><p>{{ auth()->user()->email }}</p><a href="{{ route('workspace.profile.edit') }}"><x-ui.icon name="users" />My profile</a><a href="{{ route('security.index') }}"><x-ui.icon name="shield" />My security</a><form method="POST" action="{{ route('logout') }}">
 @csrf<button aria-label="Sign out"><x-ui.icon name="logout" />Sign out</button></form></div></details></div>
 </header>
+<div class="workspace-notification-toast" data-notification-toast role="status" aria-live="polite" hidden><a data-notification-toast-link href="{{ route('workspace.notifications.index') }}"><strong data-notification-toast-title></strong><span data-notification-toast-body></span></a><button type="button" data-notification-toast-close aria-label="Dismiss notification">×</button></div>
 <main id="main-content" class="workspace-content" tabindex="-1">
 @if($switchableOrganizations->count()>1)
 <form class="organization-switch no-print" method="POST" action="{{ route('identity.organization') }}">

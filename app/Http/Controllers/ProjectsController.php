@@ -29,7 +29,8 @@ class ProjectsController extends Controller
         $visible = $this->has($request, 'projects.manage') || (int) $project->owner_id === (int) $user->id
             || DB::table('project_members')->where('project_id', $id)->where('user_id', $user->id)->exists()
             || DB::table('project_tasks')->where('project_id', $id)->where('owner_id', $user->id)->exists();
-        abort_unless($visible && ($this->has($request, 'projects.view') || $this->has($request, 'projects.manage')), 403); return $project;
+        $workspaceAccess = $request->user()->canAny(['projects.view', 'projects.manage', 'projects.tasks.manage', 'projects.time.manage', 'projects.risks.manage', 'projects.approve']);
+        abort_unless($visible && ($workspaceAccess || $request->user()->isSuperAdmin()), 403); return $project;
     }
 
     private function member(Request $request, Organization $org, int $userId): void

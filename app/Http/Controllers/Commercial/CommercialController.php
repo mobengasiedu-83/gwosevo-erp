@@ -12,6 +12,9 @@ use App\Models\CommercialDocument;
 use App\Models\CommercialHandover;
 use App\Models\CommercialOnboardingItem;
 use App\Models\CommercialQuote;
+use App\Models\CommercialQuoteApproval;
+use App\Models\CommercialPriceList;
+use App\Models\OpportunityDiscountApproval;
 use App\Models\Opportunity;
 use App\Models\SalesServiceLine;
 use App\Models\SalesServicePackage;
@@ -24,12 +27,94 @@ use Illuminate\Validation\Rule;
 
 class CommercialController extends Controller
 {
-    private function enabled(): void { abort_unless(app(Modules::class)->enabled('contracts') && app(Modules::class)->enabled('sales'),404); }
+    private function enabled(): void { abort_unless(app(Modules::class)->enabled('contracts') && app(Modules::class)->enabled('sales') && app(Modules::class)->enabled('commercial'),404); }
     private function contractAccess(Request $request, CommercialContract $contract, string $permission='contracts.view'): void
     {
         $this->enabled(); abort_unless($request->user()->isActive() && $request->user()->can($permission) && app(CommercialAccess::class)->allowsContract($request->user(),$contract),403);
     }
     private function quoteAccess(Request $request, CommercialQuote $quote, string $ability='view'): void { $this->enabled(); $this->authorize($ability,$quote); }
+
+    public function dashboard(Request $request, SalesAccess $sales, CommercialAccess $commercial)
+    {
+        $this->enabled(); abort_unless($request->user()->can('commercial.view'),403);
+        $organizationId=(int)$request->user()->active_organization_id;
+        $opportunities=$sales->query($request->user());
+        $contracts=$commercial->contracts($request->user());
+        $quotes=$commercial->quotes($request->user());
+        $stats=[
+            'open_opportunities'=>(clone $opportunities)->whereNotIn('stage',['won','lost'])->count(),
+            'pipeline_value'=>(float)(clone $opportunities)->whereNotIn('stage',['won','lost'])->sum('amount'),
+            'weighted_pipeline'=>(float)(clone $opportunities)->whereNotIn('stage',['won','lost'])->selectRaw('COALESCE(SUM(amount * probability / 100),0) AS total')->value('total'),
+            'pending_quotes'=>(clone $quotes)->where('status','pending_approval')->count(),
+            'active_contracts'=>(clone $contracts)->where('status','active')->count(),
+            'renewals_due'=>(clone $contracts)->where('status','active')->whereNotNull('renewal_date')->whereDate('renewal_date','<=',today()->addDays(180))->count(),
+            'current_targets'=>DB::table('sales_targets')->where('organization_id',$organizationId)->whereDate('period_start','<=',today())->whereDate('period_end','>=',today())->count(),
+            'campaigns'=>app(Modules::class)->enabled('marketing') && $request->user()->can('marketing.view') ? DB::table('marketing_campaigns')->where('organization_id',$organizationId)->count() : null,
+        ];
+        $recentOpportunities=(clone $opportunities)->with(['account','owner'])->latest()->limit(8)->get();
+        $recentQuotes=(clone $quotes)->with('opportunity.account')->latest()->limit(6)->get();
+        return view('commercial.dashboard',compact('stats','recentOpportunities','recentQuotes'));
+    }
+
+    public function priceLists(Request $request)
+    {
+        $this->enabled(); abort_unless($request->user()->can('commercial.prices.manage') || $request->user()->can('commercial.prices.approve'),403);
+        $organizationId=(int)$request->user()->active_organization_id;
+        $priceLists=DB::table('commercial_price_lists')->where('organization_id',$organizationId)->orderByDesc('created_at')->paginate(25)->withQueryString();
+        $priceItems=DB::table('commercial_price_list_items')->whereIn('price_list_id',$priceLists->pluck('id'))->orderBy('description')->get()->groupBy('price_list_id');
+        $serviceLines=SalesServiceLine::where('organization_id',$organizationId)->where('is_active',true)->orderBy('name')->get();
+        $servicePackages=SalesServicePackage::where('organization_id',$organizationId)->where('is_active',true)->orderBy('name')->get();
+        return view('commercial.price-lists',compact('priceLists','priceItems','serviceLines','servicePackages'));
+    }
+
+    public function priceListStore(Request $request)
+    {
+        $this->enabled(); abort_unless($request->user()->can('commercial.prices.manage'),403);
+        $organizationId=(int)$request->user()->active_organization_id;
+        $data=$request->validate(['name'=>['required','string','max:160'],'currency'=>['required','string','size:3','alpha'],'effective_from'=>['required','date'],'effective_until'=>['nullable','date','after_or_equal:effective_from'],'notes'=>['nullable','string','max:3000'],'items'=>['required','array','min:1','max:100'],'items.*.service_line_id'=>['nullable','integer',Rule::exists('sales_service_lines','id')->where('organization_id',$organizationId)],'items.*.service_package_id'=>['nullable','integer',Rule::exists('sales_service_packages','id')->where('organization_id',$organizationId)],'items.*.description'=>['required','string','max:255'],'items.*.pricing_type'=>['required',Rule::in(['fixed','recurring','usage','negotiated'])],'items.*.unit_price'=>['required','numeric','min:0','max:999999999'],'items.*.billing_period'=>['nullable','string','max:30']]);
+        $list=DB::transaction(function()use($data,$organizationId,$request){
+            $id=DB::table('commercial_price_lists')->insertGetId(['organization_id'=>$organizationId,'name'=>$data['name'],'currency'=>strtoupper($data['currency']),'effective_from'=>$data['effective_from'],'effective_until'=>$data['effective_until']??null,'status'=>'pending_approval','notes'=>$data['notes']??null,'created_by'=>$request->user()->id,'created_at'=>now(),'updated_at'=>now()]);
+            foreach($data['items'] as $item)DB::table('commercial_price_list_items')->insert(['price_list_id'=>$id,...$item,'created_at'=>now(),'updated_at'=>now()]);
+            return DB::table('commercial_price_lists')->find($id);
+        });
+        \App\Domain\Administration\AdminAudit::record('commercial.price_list.submitted',CommercialPriceList::class,(int)$list->id,null,['name'=>$list->name,'currency'=>$list->currency,'item_count'=>count($data['items'])],$organizationId);
+        return back()->with('success','Price list submitted for independent approval. It cannot be used on quotations until approved and within its effective dates.');
+    }
+
+    public function priceListDecision(Request $request,int $priceList)
+    {
+        $this->enabled();abort_unless($request->user()->can('commercial.prices.approve'),403);
+        $organizationId=(int)$request->user()->active_organization_id;$list=DB::table('commercial_price_lists')->where('organization_id',$organizationId)->find($priceList);abort_if(!$list,404);
+        abort_unless($list->status==='pending_approval',409,'This price list has already been reviewed.');
+        abort_unless((int)$list->created_by!==(int)$request->user()->id,403,'The requester cannot approve their own price list.');
+        $data=$request->validate(['decision'=>['required',Rule::in(['approved','rejected'])],'review_note'=>['nullable','string','max:3000']]);
+        DB::table('commercial_price_lists')->where('id',$priceList)->update(['status'=>$data['decision'],'reviewed_by'=>$request->user()->id,'reviewed_at'=>now(),'review_note'=>$data['review_note']??null,'updated_at'=>now()]);
+        \App\Domain\Administration\AdminAudit::record('commercial.price_list.'.$data['decision'],CommercialPriceList::class,$priceList,['status'=>'pending_approval'],['status'=>$data['decision'],'review_note'=>$data['review_note']??null],$organizationId);
+        return back()->with('success','Price list decision recorded.');
+    }
+
+    public function discounts(Request $request)
+    {
+        $this->enabled();abort_unless($request->user()->can('commercial.discounts.view'),403);
+        $organizationId=(int)$request->user()->active_organization_id;
+        $opportunityApprovals=OpportunityDiscountApproval::query()->with(['requester','decider'])->where('status','pending')->whereHas('opportunity',fn($q)=>$q->where('organization_id',$organizationId))->latest()->paginate(20,['*'],'opportunity_page')->withQueryString();
+        $quoteApprovals=CommercialQuoteApproval::query()->with(['requester','decider','quote.opportunity.account'])->where('status','pending')->whereHas('quote',fn($q)=>$q->where('organization_id',$organizationId)->where('discount_percent','>',0))->latest()->paginate(20,['*'],'quote_page')->withQueryString();
+        return view('commercial.discounts',compact('opportunityApprovals','quoteApprovals'));
+    }
+
+    public function onboarding(Request $request,CommercialAccess $access)
+    {
+        $this->enabled();abort_unless($request->user()->can('contracts.view'),403);
+        $contracts=$access->contracts($request->user())->with('opportunity.account')->withCount(['onboardingItems as open_onboarding_items'=>fn($q)=>$q->whereNotIn('status',['complete','approved'])])->having('open_onboarding_items','>',0)->latest()->paginate(20);
+        return view('commercial.contract-queue', ['title'=>'Customer Onboarding','description'=>'Contracts with outstanding activation checklist work.','contracts'=>$contracts]);
+    }
+
+    public function renewals(Request $request,CommercialAccess $access)
+    {
+        $this->enabled();abort_unless($request->user()->can('contracts.view'),403);
+        $contracts=$access->contracts($request->user())->with('opportunity.account')->where('status','active')->whereNotNull('renewal_date')->orderBy('renewal_date')->paginate(20);
+        return view('commercial.contract-queue', ['title'=>'Renewals','description'=>'Active customer agreements with a recorded renewal date.','contracts'=>$contracts]);
+    }
 
     public function quotes(Request $request, CommercialAccess $access)
     {
@@ -41,7 +126,7 @@ class CommercialController extends Controller
     {
         $this->enabled(); $this->authorize('create',CommercialQuote::class);
         abort_unless(app(SalesAccess::class)->allows($request->user(),$opportunity),404);
-        return view('commercial.quotes.form',['quote'=>new CommercialQuote(['currency'=>config('app.currency','GHS')]),'opportunity'=>$opportunity,'action'=>route('commercial.quotes.store',$opportunity),'method'=>'POST',...$this->catalogOptions($opportunity->organization_id)]);
+        return view('commercial.quotes.form',['quote'=>new CommercialQuote(['currency'=>config('app.currency','GHS')]),'opportunity'=>$opportunity,'action'=>route('commercial.quotes.store',$opportunity),'method'=>'POST',...$this->catalogOptions($opportunity->organization_id),...$this->priceListOptions($opportunity->organization_id)]);
     }
     public function quoteStore(Request $request, Opportunity $opportunity, QuoteService $service)
     {
@@ -59,7 +144,7 @@ class CommercialController extends Controller
     public function quoteEdit(Request $request, CommercialQuote $quote)
     {
         $this->quoteAccess($request,$quote,'update'); $quote->load('lines');
-        return view('commercial.quotes.form',['quote'=>$quote,'opportunity'=>$quote->opportunity,'action'=>route('commercial.quotes.update',$quote),'method'=>'PUT',...$this->catalogOptions($quote->organization_id)]);
+        return view('commercial.quotes.form',['quote'=>$quote,'opportunity'=>$quote->opportunity,'action'=>route('commercial.quotes.update',$quote),'method'=>'PUT',...$this->catalogOptions($quote->organization_id),...$this->priceListOptions($quote->organization_id)]);
     }
     public function quoteUpdate(Request $request, CommercialQuote $quote, QuoteService $service)
     {
@@ -256,7 +341,13 @@ class CommercialController extends Controller
     }
     private function quoteData(Request $request): array
     {
-        $data=$request->validate(['currency'=>['required','string','size:3','alpha'],'valid_until'=>['nullable','date'],'notes'=>['nullable','string','max:5000'],'discount_percent'=>['required','numeric','min:0','max:100'],'lines'=>['required','array','min:1','max:50'],'lines.*.description'=>['required','string','max:255'],'lines.*.service_line_id'=>['nullable',Rule::exists('sales_service_lines','id')->where('organization_id',$request->user()->active_organization_id)],'lines.*.service_package_id'=>['nullable',Rule::exists('sales_service_packages','id')->where('organization_id',$request->user()->active_organization_id)],'lines.*.pricing_type'=>['required',Rule::in(['fixed','recurring','usage','negotiated'])],'lines.*.quantity'=>['required','numeric','gt:0','max:999999'],'lines.*.unit_price'=>['required','numeric','min:0','max:999999999'],'lines.*.billing_period'=>['nullable','string','max:30']]);
+        $data=$request->validate(['currency'=>['required','string','size:3','alpha'],'valid_until'=>['nullable','date'],'notes'=>['nullable','string','max:5000'],'discount_percent'=>['required','numeric','min:0','max:100'],'lines'=>['required','array','min:1','max:50'],'lines.*.description'=>['required','string','max:255'],'lines.*.service_line_id'=>['nullable',Rule::exists('sales_service_lines','id')->where('organization_id',$request->user()->active_organization_id)],'lines.*.service_package_id'=>['nullable',Rule::exists('sales_service_packages','id')->where('organization_id',$request->user()->active_organization_id)],'lines.*.price_list_item_id'=>['nullable','integer',Rule::exists('commercial_price_list_items','id')],'lines.*.pricing_type'=>['required',Rule::in(['fixed','recurring','usage','negotiated'])],'lines.*.quantity'=>['required','numeric','gt:0','max:999999'],'lines.*.unit_price'=>['required','numeric','min:0','max:999999999'],'lines.*.billing_period'=>['nullable','string','max:30']]);
+        foreach ($data['lines'] as $index=>$line) if (!empty($line['price_list_item_id'])) {
+            $price=DB::table('commercial_price_list_items as item')->join('commercial_price_lists as price_list','price_list.id','=','item.price_list_id')->where('item.id',$line['price_list_item_id'])->where('price_list.organization_id',$request->user()->active_organization_id)->where('price_list.status','approved')->whereDate('price_list.effective_from','<=',today())->where(fn($q)=>$q->whereNull('price_list.effective_until')->orWhereDate('price_list.effective_until','>=',today()))->select('item.*','price_list.currency as price_list_currency')->first();
+            if (!$price) abort(422,'Price list line '.($index+1).' is not in an approved, currently effective price list.');
+            abort_unless(strtoupper($data['currency'])===strtoupper($price->price_list_currency),422,'The selected price list item currency must match the quotation currency.');
+            $data['lines'][$index]=[...$line,'service_line_id'=>$price->service_line_id,'service_package_id'=>$price->service_package_id,'description'=>$price->description,'pricing_type'=>$price->pricing_type,'unit_price'=>$price->unit_price,'billing_period'=>$price->billing_period];
+        }
         foreach ($data['lines'] as $index=>$line) if (!empty($line['service_package_id']) && !empty($line['service_line_id'])) {
             $package=SalesServicePackage::where('organization_id',$request->user()->active_organization_id)->findOrFail($line['service_package_id']);
             if ($package->service_line_id && (int)$package->service_line_id!==(int)$line['service_line_id']) abort(422,"Pricing line ".($index+1)." package does not belong to the selected service line.");
@@ -266,5 +357,11 @@ class CommercialController extends Controller
     private function catalogOptions(int $organizationId): array
     {
         return ['serviceLines'=>SalesServiceLine::where('organization_id',$organizationId)->where('is_active',true)->orderBy('sort_order')->get(),'servicePackages'=>SalesServicePackage::where('organization_id',$organizationId)->where('is_active',true)->orderBy('sort_order')->get()];
+    }
+
+    private function priceListOptions(int $organizationId): array
+    {
+        $items=DB::table('commercial_price_list_items as item')->join('commercial_price_lists as price_list','price_list.id','=','item.price_list_id')->where('price_list.organization_id',$organizationId)->where('price_list.status','approved')->whereDate('price_list.effective_from','<=',today())->where(fn($q)=>$q->whereNull('price_list.effective_until')->orWhereDate('price_list.effective_until','>=',today()))->orderBy('price_list.name')->orderBy('item.description')->get(['item.*','price_list.name as price_list_name','price_list.currency as currency']);
+        return ['priceListItems'=>$items];
     }
 }

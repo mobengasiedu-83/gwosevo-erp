@@ -36,7 +36,7 @@ class QuoteService
     public function newVersion(CommercialQuote $source, User $actor): CommercialQuote
     {
         return DB::transaction(function () use ($source,$actor) {
-            $data=['currency'=>$source->currency,'valid_until'=>$source->valid_until?->toDateString(),'notes'=>$source->notes,'discount_percent'=>$source->discount_percent,'lines'=>$source->lines->map(fn($line)=>$line->only(['service_line_id','service_package_id','description','pricing_type','quantity','unit_price','billing_period']))->all()];
+            $data=['currency'=>$source->currency,'valid_until'=>$source->valid_until?->toDateString(),'notes'=>$source->notes,'discount_percent'=>$source->discount_percent,'lines'=>$source->lines->map(fn($line)=>$line->only(['service_line_id','service_package_id','price_list_item_id','description','pricing_type','quantity','unit_price','billing_period']))->all()];
             return $this->create($source->opportunity,$data,$actor);
         });
     }

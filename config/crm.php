@@ -7,7 +7,7 @@ return [
     'website_capture_secret' => env('CRM_WEBSITE_CAPTURE_SECRET'),
     'sources' => [
         'manual' => 'Manual', 'website' => 'Website', 'api' => 'API',
-        'import' => 'Approved import', 'referral' => 'Referral',
+        'import' => 'Approved import', 'referral' => 'Referral', 'social' => 'Social media',
         'inbound_call' => 'Inbound call', 'event' => 'Event', 'campaign' => 'Campaign',
     ],
 ];
