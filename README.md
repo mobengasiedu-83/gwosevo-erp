@@ -10,7 +10,7 @@ Read the [complete user guide](docs/user-guide/README.md) for sign-in, navigatio
 
 ## Current local installation
 
-Open `https://localhost/gwosevo-erp/public/`. Sign in with the existing database account. Administrator credentials are not stored in `.env` or seeders.
+Open <https://erp.gwosevo.com>. Sign in with the existing database account. Administrator credentials are not stored in `.env` or seeders.
 
 - **Organization structure**: legal entities, operating organizations, departments, branches, teams, positions, reporting/approval charts and cost-centre allocations.
 - **Overview**: scoped lead metrics, follow-ups, activity and workspace shortcuts.

@@ -44,7 +44,7 @@ All Microsoft and SMTP connection settings are in `.env`, as requested. `.env.ex
 
 The supplied tenant/client identifiers and unauthenticated SMTP relay configuration have been applied. Microsoft sign-in remains disabled until the client secret and exact redirect registration are configured. Linking a user requires their Entra **Object ID**, not their application/client ID or email. No live Microsoft login can be certified before those external configuration steps and a real tenant sign-in.
 
-The login and invitation/reset pages support the existing `/gwosevo-erp/public/` installation base. After production relocation, update APP_URL and ENTRA_REDIRECT_URI together and register the corresponding Web callback in Entra.
+The production login and invitation/reset pages are served at <https://erp.gwosevo.com>. Keep `APP_URL`, `ENTRA_REDIRECT_URI` and the corresponding Microsoft Entra Web callback aligned with this domain; update all three together if the domain changes.
 
 Invitation delivery is synchronous so errors are visible and resending is possible. A failed delivery leaves the account invited but revokes the attempted token. Log/array transports are blocked for real invitation/reset delivery to avoid writing credential-setting links into logs. Tests use notification fakes. No test mail is sent to real users during installation.
 

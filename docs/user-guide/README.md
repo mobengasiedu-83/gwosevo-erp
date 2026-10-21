@@ -1,7 +1,17 @@
 # GWO SEVO ERP — User Guide
 
-**Edition:** 20 October 2026 · **Audience:** staff, supervisors, reviewers and administrators
-**Application:** <https://localhost/gwosevo-erp/public/>
+**Edition:** 21 October 2026 · **Audience:** staff, supervisors, reviewers and administrators
+**Application:** <https://erp.gwosevo.com>
+
+## Visual guide
+
+These diagrams summarize the main navigation groups and two common record flows. They describe the configured workflows; they are not live performance charts.
+
+![Map of the 11 top-level ERP areas grouped by how teams use them](https://erp.gwosevo.com/images/user-manual/module-map.svg)
+
+![Lead workflow from capture through qualification and conversion](https://erp.gwosevo.com/images/user-manual/lead-flow.svg)
+
+![Approval workflow from request through supervisor and final review](https://erp.gwosevo.com/images/user-manual/approval-flow.svg)
 
 This guide is also available inside the ERP from the **User manual** link at the bottom of the workspace sidebar. The in-app manual renders this file and the linked module guides directly, so document updates appear there without copying content into a second source.
 

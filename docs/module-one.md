@@ -38,7 +38,7 @@ Apply the additive migration with `php artisan migrate --force`. Assets are buil
 
 Run the Laravel scheduler once a minute in the deployment environment. The `erp-health-heartbeat` scheduled task records a scheduler heartbeat and dispatches a queue heartbeat. Use the configured queue worker/Horizon for asynchronous queues. The health screen reports absent or stale heartbeats and does not claim a sync queue has a running worker. This implementation does not install host cron or supervisor services.
 
-Configuration uses a request-scoped settings reader, so saves take effect on subsequent requests without a long-lived settings cache. Application/database timestamps remain UTC; the selected time zone controls display. Livewire 3 script/update URLs preserve the detected Laravel base path, including `/gwosevo-erp/public/`.
+Configuration uses a request-scoped settings reader, so saves take effect on subsequent requests without a long-lived settings cache. Application/database timestamps remain UTC; the selected time zone controls display. Livewire 3 script/update URLs preserve the detected Laravel base path. The production application is served at <https://erp.gwosevo.com>.
 
 ## Verification and UAT
 
