@@ -19,6 +19,7 @@ $unreadNotificationCount = auth()->user()->unreadNotifications()->count();
 @vite(['resources/css/app.css','resources/js/app.js'])
 <link rel="stylesheet" href="{{ asset('css/brand-fonts.css') }}"><link rel="stylesheet" href="{{ asset('css/administration.css') }}?v={{ filemtime(public_path('css/administration.css')) }}">
 <link rel="stylesheet" href="{{ asset('css/workspace-components.css') }}?v={{ filemtime(public_path('css/workspace-components.css')) }}">
+<link rel="stylesheet" href="{{ asset('css/form-system.css') }}?v={{ filemtime(public_path('css/form-system.css')) }}">
 <style>:root{--erp-brand:{{ $erpSettings->get('brand_color') }}}</style>
 @livewireStyles
 </head>

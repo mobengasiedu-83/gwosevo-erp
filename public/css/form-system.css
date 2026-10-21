@@ -1,0 +1,92 @@
+/* Application-wide form controls. Layout remains owned by each screen's form/grid class. */
+form label {
+    display: grid;
+    align-content: start;
+    gap: 7px;
+    min-width: 0;
+    color: #5e5665;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.45;
+}
+form label:has(input[type="checkbox"]),
+form label:has(input[type="radio"]) {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    min-height: 42px;
+    font-weight: 500;
+}
+form :is(input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="submit"]):not([type="button"]):not([type="reset"]), select, textarea) {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    min-height: 44px;
+    margin: 0;
+    padding: 10px 13px;
+    border: 1px solid #dedbe3;
+    border-radius: 9px;
+    background: #fff;
+    color: #403a46;
+    font: inherit;
+    font-size: 13px;
+    line-height: 1.45;
+    box-shadow: 0 1px 2px rgba(32, 25, 40, .035);
+    transition: border-color .16s ease, box-shadow .16s ease, background-color .16s ease;
+}
+form textarea { min-height: 112px; resize: vertical; }
+form select { padding-right: 34px; cursor: pointer; }
+form select[multiple] { min-height: 112px; padding: 8px; }
+form :is(input, select, textarea)::placeholder { color: #aaa3b0; opacity: 1; }
+form :is(input, select, textarea):hover:not(:disabled):not(:focus) { border-color: #c9c3cf; }
+form :is(input, select, textarea):focus-visible {
+    border-color: #78a86c;
+    outline: 0;
+    box-shadow: 0 0 0 3px rgba(68, 158, 55, .14);
+}
+form :is(input, select, textarea):disabled,
+form :is(input, select, textarea)[readonly] { background: #f5f4f6; color: #817a86; cursor: not-allowed; }
+form :is(input, select, textarea)[aria-invalid="true"] { border-color: #c95d63; }
+form input[type="checkbox"], form input[type="radio"] {
+    width: 18px;
+    height: 18px;
+    min-width: 18px;
+    min-height: 18px;
+    margin: 0;
+    accent-color: var(--erp-brand, #449e37);
+    cursor: pointer;
+}
+form input[type="file"] { min-height: auto; padding: 7px; background: #fbfbfc; }
+form input[type="file"]::file-selector-button {
+    margin-right: 10px;
+    padding: 7px 11px;
+    border: 0;
+    border-radius: 7px;
+    background: #edf5e9;
+    color: #47763d;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+}
+form :is(button, input[type="submit"], input[type="button"], .button, .workspace-action) {
+    box-sizing: border-box;
+    min-height: 40px;
+    padding: 9px 15px;
+    border-radius: 9px;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 650;
+    line-height: 1.35;
+}
+form :is(button, input[type="submit"], input[type="button"], .button, .workspace-action):focus-visible {
+    outline: 3px solid rgba(68, 158, 55, .2);
+    outline-offset: 2px;
+}
+form :is(button, input[type="submit"], input[type="button"]):disabled { opacity: .6; cursor: not-allowed; }
+form :is(.inline-actions, .row-actions) :is(input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]), select, textarea) { width: auto; min-height: 40px; }
+form :is(.inline-actions, .row-actions) textarea { min-width: min(220px, 100%); }
+form small, form .help { color: #817889; font-size: 11px; font-weight: 400; }
+
+@media (max-width: 640px) {
+    form :is(button, input[type="submit"], input[type="button"], .button, .workspace-action) { max-width: 100%; }
+}

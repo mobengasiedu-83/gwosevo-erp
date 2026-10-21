@@ -21,6 +21,10 @@ This guide describes the application currently installed in this repository. Mod
 
 The names “superadmin” and “Administrator” refer here to the existing Administrator account/role. This guide contains no account passwords, invitation tokens or integration secrets.
 
+### Forms and consistent entry
+
+Across the ERP, forms use a consistent field size, label treatment, focus indicator, validation state and action-button height. Screen-specific grids still arrange fields to fit each workflow; on narrow screens, multi-column forms collapse to a single column. Labels identify each value to enter, and validation messages appear at the top of the page and, where provided, beside the affected field. Review the displayed values before saving, especially for actions that issue, approve, archive, convert or send a record.
+
 ## Contents
 
 

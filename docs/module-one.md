@@ -4,6 +4,8 @@ Scope follows module 01 in GWO_SEVO_ERP_Module_Feature_Breakdown.docx, with the 
 
 Open **Administration** from the signed-in navigation. Access requires an active user with the existing **Administrator** role. Every controller action and Livewire health action checks authorization. Settings are global to this ERP installation; CRM records retain their existing organization scope.
 
+ERP forms share standard field, label, focus, validation and button styling. Their field arrangement remains specific to the task, and multi-column layouts adapt to narrow screens. Read the field labels and validation messages before saving configuration or reference data.
+
 | Area | Implemented behavior |
 | --- | --- |
 | General | Company name, contact details, address, presentation time zone and date format |
