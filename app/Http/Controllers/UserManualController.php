@@ -6,10 +6,17 @@ use Illuminate\Http\Request;
 use League\CommonMark\Environment\Environment;
 use League\CommonMark\Extension\CommonMark\CommonMarkCoreExtension;
 use League\CommonMark\Extension\HeadingPermalink\HeadingPermalinkExtension;
+use League\CommonMark\Extension\Table\TableExtension;
 use League\CommonMark\MarkdownConverter;
 
 class UserManualController extends Controller
 {
+    private const MANUAL_IMAGES = [
+        'module-map.svg',
+        'lead-flow.svg',
+        'approval-flow.svg',
+    ];
+
     public function __invoke(Request $request)
     {
         $documents = $this->documents();
@@ -18,6 +25,7 @@ class UserManualController extends Controller
 
         $markdown = file_get_contents(base_path('docs/'.$selected));
         $markdown = $this->rewriteDocumentLinks($markdown, $selected, $documents);
+        $markdown = $this->rewriteManualImages($markdown);
 
         $environment = new Environment([
             'html_input' => 'strip',
@@ -30,8 +38,10 @@ class UserManualController extends Controller
         ]);
         $environment->addExtension(new CommonMarkCoreExtension());
         $environment->addExtension(new HeadingPermalinkExtension());
+        $environment->addExtension(new TableExtension());
         $converter = new MarkdownConverter($environment);
         $html = (string) $converter->convert($markdown);
+        $html = preg_replace('/<table>(.*?)<\/table>/s', '<div class="manual-table-scroll"><table>$1</table></div>', $html) ?? $html;
         $topLevelKeys = [
             'module-one-workspace.md',
             'module-two-crm.md',
@@ -59,6 +69,19 @@ class UserManualController extends Controller
             'topLevelDocuments' => $topLevelDocuments,
             'html' => $html,
             'contents' => $this->contents($markdown, $environment),
+        ]);
+    }
+
+    public function image(string $filename)
+    {
+        abort_unless(in_array($filename, self::MANUAL_IMAGES, true), 404);
+
+        $path = public_path('images/user-manual/'.$filename);
+        abort_unless(is_file($path), 404);
+
+        return response()->file($path, [
+            'Content-Type' => 'image/svg+xml; charset=UTF-8',
+            'Cache-Control' => 'public, max-age=3600',
         ]);
     }
 
@@ -116,6 +139,17 @@ class UserManualController extends Controller
 
             return ']('.$url.')';
         }, $markdown) ?? $markdown;
+    }
+
+    private function rewriteManualImages(string $markdown): string
+    {
+        foreach (self::MANUAL_IMAGES as $filename) {
+            $source = 'https://erp.gwosevo.com/images/user-manual/'.$filename;
+            $localUrl = route('user-manual.image', ['filename' => $filename]);
+            $markdown = str_replace($source, $localUrl, $markdown);
+        }
+
+        return $markdown;
     }
 
     private function contents(string $markdown, Environment $environment): array

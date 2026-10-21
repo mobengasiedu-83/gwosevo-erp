@@ -59,6 +59,9 @@ Route::middleware('guest')->group(function () {
 Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
     Route::get('/user-manual', UserManualController::class)->name('user-manual');
+    Route::get('/user-manual/images/{filename}', [UserManualController::class, 'image'])
+        ->where('filename', '[A-Za-z0-9_-]+\.svg')
+        ->name('user-manual.image');
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
     Route::put('/workspace/dashboard-preferences', [WorkspaceController::class, 'dashboardPreferencesUpdate'])->name('workspace.dashboard.preferences');
     Route::prefix('workspace')->name('workspace.')->group(function () {
